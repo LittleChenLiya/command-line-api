@@ -110,6 +110,7 @@
   public class ParserConfiguration
     .ctor()
     public System.Boolean EnablePosixBundling { get; set; }
+    public System.CommandLine.Parsing.ResponseFileExpansionOptions ResponseFileExpansion { get; set; }
     public System.CommandLine.Parsing.TryReplaceToken ResponseFileTokenReplacer { get; set; }
   public class ParseResult
     public System.CommandLine.Invocation.CommandLineAction Action { get; }
@@ -225,6 +226,18 @@ System.CommandLine.Parsing
     public System.CommandLine.Directive Directive { get; }
     public Token Token { get; }
     public System.Collections.Generic.IReadOnlyList<System.String> Values { get; }
+  public class ExpandedArgument
+    .ctor(System.String value, TokenSource source)
+    public TokenSource Source { get; }
+    public System.String Value { get; }
+    public System.String ToString()
+  public class FileResponseFileReader, IResponseFileReader
+    public static FileResponseFileReader Instance { get; }
+    public System.Boolean Exists(System.String path)
+    public System.Byte[] ReadAllBytes(System.String path)
+  public interface IResponseFileReader
+    public System.Boolean Exists(System.String path)
+    public System.Byte[] ReadAllBytes(System.String path)
   public class OptionResult : SymbolResult
     public Token IdentifierToken { get; }
     public System.Int32 IdentifierTokenCount { get; }
@@ -234,8 +247,27 @@ System.CommandLine.Parsing
     public System.String ToString()
   public class ParseError
     public System.String Message { get; }
+    public TokenSource Source { get; }
     public SymbolResult SymbolResult { get; }
     public System.String ToString()
+  public static class ResponseFileExpander
+    public static ResponseFileExpansionResult Expand(System.Collections.Generic.IReadOnlyList<System.String> args, ResponseFileExpansionOptions options)
+  public class ResponseFileExpansionError
+    .ctor(System.String message, TokenSource source)
+    public System.String Message { get; }
+    public TokenSource Source { get; }
+    public System.String ToString()
+  public class ResponseFileExpansionOptions
+    .ctor()
+    public System.String BaseDirectory { get; set; }
+    public IResponseFileReader FileReader { get; set; }
+    public System.Int32 MaxDepth { get; set; }
+    public System.Int64 MaxTotalBytes { get; set; }
+    public System.Int32 MaxTotalTokens { get; set; }
+  public class ResponseFileExpansionResult
+    public System.Collections.Generic.IReadOnlyList<ExpandedArgument> Arguments { get; }
+    public System.Collections.Generic.IReadOnlyList<ResponseFileExpansionError> Errors { get; }
+    public System.Boolean Success { get; }
   public abstract class SymbolResult
     public System.Collections.Generic.IEnumerable<ParseError> Errors { get; }
     public SymbolResult Parent { get; }
@@ -256,11 +288,21 @@ System.CommandLine.Parsing
     public static System.Boolean op_Equality(Token left, Token right)
     public static System.Boolean op_Inequality(Token left, Token right)
     .ctor(System.String value, TokenType type, System.CommandLine.Symbol symbol)
+    public TokenSource Source { get; }
     public TokenType Type { get; }
     public System.String Value { get; }
     public System.Boolean Equals(System.Object obj)
     public System.Boolean Equals(Token other)
     public System.Int32 GetHashCode()
+    public System.String ToString()
+  public class TokenSource
+    .ctor(System.String filePath, System.Int32 line, System.Int32 column, TokenSource includedFrom = null)
+    public System.Int32 Column { get; }
+    public System.String FilePath { get; }
+    public System.Collections.Generic.IReadOnlyList<TokenSource> IncludeChain { get; }
+    public TokenSource IncludedFrom { get; }
+    public System.Boolean IsCommandLine { get; }
+    public System.Int32 Line { get; }
     public System.String ToString()
   public enum TokenType : System.Enum, System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable
     Argument=0

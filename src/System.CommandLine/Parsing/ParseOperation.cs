@@ -26,14 +26,14 @@ namespace System.CommandLine.Parsing
             List<Token> tokens,
             Command rootCommand,
             ParserConfiguration configuration,
-            List<string>? tokenizeErrors,
+            List<ParseError>? errors,
             string? rawInput)
         {
             _tokens = tokens;
             _configuration = configuration;
             _rootCommand = rootCommand;
             _rawInput = rawInput;
-            _symbolResultTree = new(_rootCommand, tokenizeErrors);
+            _symbolResultTree = new(_rootCommand, errors);
             _innermostCommandResult = _rootCommandResult = new CommandResult(
                 _rootCommand,
                 CurrentToken,

@@ -39,6 +39,17 @@ namespace System.CommandLine.Parsing
         /// <returns>A sequence of strings.</returns>
         public static IEnumerable<string> SplitCommandLine(string commandLine)
         {
+            foreach (var token in SplitCommandLineWithPositions(commandLine))
+            {
+                if (token.Kind == CommandLineTokenKind.Token)
+                {
+                    yield return token.Value;
+                }
+            }
+        }
+
+        internal static IEnumerable<CommandLineTokenInfo> SplitCommandLineWithPositions(string commandLine)
+        {
             var memory = commandLine.AsMemory();
 
             var startTokenIndex = 0;
@@ -47,6 +58,9 @@ namespace System.CommandLine.Parsing
 
             var seeking = Boundary.TokenStart;
             var seekingQuote = Boundary.QuoteStart;
+
+            var tokenStartIndex = 0;
+            var quoteStartIndex = -1;
 
             while (pos < memory.Length)
             {
@@ -85,6 +99,8 @@ namespace System.CommandLine.Parsing
                             case Boundary.QuoteStart:
                                 startTokenIndex = pos + 1;
                                 seekingQuote = Boundary.QuoteEnd;
+                                tokenStartIndex = pos;
+                                quoteStartIndex = pos;
                                 break;
                         }
                     }
@@ -98,6 +114,7 @@ namespace System.CommandLine.Parsing
 
                             case Boundary.QuoteStart:
                                 seekingQuote = Boundary.QuoteEnd;
+                                quoteStartIndex = pos;
                                 break;
                         }
                     }
@@ -106,6 +123,7 @@ namespace System.CommandLine.Parsing
                 {
                     seeking = Boundary.WordEnd;
                     startTokenIndex = pos;
+                    tokenStartIndex = pos;
                 }
 
                 Advance();
@@ -120,19 +138,56 @@ namespace System.CommandLine.Parsing
                             yield return CurrentToken();
                             break;
                     }
+
+                    if (seekingQuote == Boundary.QuoteEnd && quoteStartIndex >= 0)
+                    {
+                        yield return CommandLineTokenInfo.UnterminatedQuote(quoteStartIndex);
+                    }
                 }
             }
 
             void Advance() => pos++;
 
-            string CurrentToken()
+            CommandLineTokenInfo CurrentToken()
             {
-                return memory.Slice(startTokenIndex, IndexOfEndOfToken()).ToString().Replace("\"", "");
+                var value = memory.Slice(startTokenIndex, IndexOfEndOfToken()).ToString().Replace("\"", "");
+                return new CommandLineTokenInfo(value, tokenStartIndex);
             }
 
             int IndexOfEndOfToken() => pos - startTokenIndex;
 
             bool IsAtEndOfInput() => pos == memory.Length;
+        }
+
+        internal enum CommandLineTokenKind
+        {
+            Token,
+            UnterminatedQuote
+        }
+
+        internal readonly struct CommandLineTokenInfo
+        {
+            internal CommandLineTokenInfo(string value, int startIndex)
+            {
+                Kind = CommandLineTokenKind.Token;
+                Value = value;
+                StartIndex = startIndex;
+            }
+
+            private CommandLineTokenInfo(int unterminatedQuoteIndex)
+            {
+                Kind = CommandLineTokenKind.UnterminatedQuote;
+                Value = "";
+                StartIndex = unterminatedQuoteIndex;
+            }
+
+            internal CommandLineTokenKind Kind { get; }
+
+            internal string Value { get; }
+
+            internal int StartIndex { get; }
+
+            internal static CommandLineTokenInfo UnterminatedQuote(int quoteIndex) => new(quoteIndex);
         }
 
         private static ParseResult Parse(
@@ -148,18 +203,64 @@ namespace System.CommandLine.Parsing
 
             configuration ??= new ParserConfiguration();
 
+            IReadOnlyList<TokenSource>? tokenSources = null;
+            List<ParseError>? errors = null;
+
+            if (configuration.ResponseFileExpansion is { } expansionOptions)
+            {
+                ResponseFileExpansionResult expansion = ResponseFileExpander.Expand(arguments, expansionOptions);
+
+                if (!expansion.Success)
+                {
+                    errors = new List<ParseError>(expansion.Errors.Count);
+
+                    for (var i = 0; i < expansion.Errors.Count; i++)
+                    {
+                        ResponseFileExpansionError error = expansion.Errors[i];
+                        errors.Add(new ParseError(error.Message, source: error.Source));
+                    }
+
+                    arguments = Array.Empty<string>();
+                }
+                else
+                {
+                    var expandedArguments = new string[expansion.Arguments.Count];
+                    var sources = new TokenSource[expansion.Arguments.Count];
+
+                    for (var i = 0; i < expandedArguments.Length; i++)
+                    {
+                        expandedArguments[i] = expansion.Arguments[i].Value;
+                        sources[i] = expansion.Arguments[i].Source;
+                    }
+
+                    arguments = expandedArguments;
+                    tokenSources = sources;
+                }
+            }
+
             arguments.Tokenize(
                 command,
                 configuration,
                 inferRootCommand: rawInput is not null,
                 out List<Token> tokens,
-                out List<string>? tokenizationErrors);
+                out List<string>? tokenizationErrors,
+                tokenSources);
+
+            if (tokenizationErrors is not null)
+            {
+                errors ??= new List<ParseError>(tokenizationErrors.Count);
+
+                for (var i = 0; i < tokenizationErrors.Count; i++)
+                {
+                    errors.Add(new ParseError(tokenizationErrors[i]));
+                }
+            }
 
             var operation = new ParseOperation(
                 tokens,
                 command,
                 configuration,
-                tokenizationErrors,
+                errors,
                 rawInput);
 
             return operation.Parse();

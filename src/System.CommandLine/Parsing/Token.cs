@@ -48,6 +48,13 @@ namespace System.CommandLine.Parsing
         /// </summary>
         internal Symbol? Symbol { get; set; }
 
+        /// <summary>
+        /// Gets the source the token was read from, including the response file,
+        /// line, column, and include chain when response file expansion is enabled.
+        /// <see langword="null"/> when the source is not tracked.
+        /// </summary>
+        public TokenSource? Source { get; internal set; }
+
         /// <inheritdoc />
         public override bool Equals(object? obj) => Equals(obj as Token);
 

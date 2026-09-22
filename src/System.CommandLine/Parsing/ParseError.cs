@@ -8,17 +8,21 @@ namespace System.CommandLine.Parsing
     /// </summary>
     public sealed class ParseError
     {
+        private readonly TokenSource? _source;
+
         internal ParseError(
-            string message, 
-            SymbolResult? symbolResult = null)
+            string message,
+            SymbolResult? symbolResult = null,
+            TokenSource? source = null)
         {
             if (string.IsNullOrWhiteSpace(message))
             {
                 throw new ArgumentException("Value cannot be null or whitespace.", nameof(message));
             }
-          
+
             Message = message;
             SymbolResult = symbolResult;
+            _source = source;
         }
 
         /// <summary>
@@ -30,6 +34,43 @@ namespace System.CommandLine.Parsing
         /// The symbol result detailing the symbol that failed to parse and the tokens involved.
         /// </summary>
         public SymbolResult? SymbolResult { get; }
+
+        /// <summary>
+        /// Gets the source location (response file, line, column, and include chain) of the
+        /// token that caused the error, when response file expansion is enabled and the
+        /// location is known.
+        /// </summary>
+        public TokenSource? Source
+        {
+            get
+            {
+                if (_source is not null)
+                {
+                    return _source;
+                }
+
+                if (SymbolResult is not null)
+                {
+                    var tokens = SymbolResult.Tokens;
+
+                    for (var i = 0; i < tokens.Count; i++)
+                    {
+                        if (tokens[i].Source is { } source)
+                        {
+                            return source;
+                        }
+                    }
+                }
+
+                if (SymbolResult is OptionResult optionResult &&
+                    optionResult.IdentifierToken?.Source is { } identifierSource)
+                {
+                    return identifierSource;
+                }
+
+                return null;
+            }
+        }
 
         /// <inheritdoc />
         public override string ToString() => Message;
