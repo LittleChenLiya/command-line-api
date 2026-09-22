@@ -36,6 +36,14 @@ namespace System.CommandLine.Parsing
         /// </summary>
         public string Value { get; }
 
+        /// <summary>
+        /// The source the token was read from: the command line itself, or a specific
+        /// location (file, line, column and include chain) inside a response file when
+        /// a <see cref="ResponseFileExpander"/> was used. <see langword="null"/> when the
+        /// source of the token was not tracked.
+        /// </summary>
+        public TokenSource? Source { get; internal set; }
+
         internal bool Implicit => Position == ImplicitPosition;
 
         /// <summary>

@@ -9,27 +9,41 @@ namespace System.CommandLine.Parsing
     public sealed class ParseError
     {
         internal ParseError(
-            string message, 
-            SymbolResult? symbolResult = null)
+            string message,
+            SymbolResult? symbolResult = null,
+            TokenSource? source = null)
         {
             if (string.IsNullOrWhiteSpace(message))
             {
                 throw new ArgumentException("Value cannot be null or whitespace.", nameof(message));
             }
-          
-            Message = message;
+
+            _message = message;
             SymbolResult = symbolResult;
+            Source = source;
         }
 
         /// <summary>
         /// A message to explain the error to a user.
         /// </summary>
-        public string Message { get; }
+        public string Message =>
+            Source is null
+                ? _message
+                : $"{_message} [{Source.FormatIncludeChain()}]";
+
+        private readonly string _message;
 
         /// <summary>
         /// The symbol result detailing the symbol that failed to parse and the tokens involved.
         /// </summary>
         public SymbolResult? SymbolResult { get; }
+
+        /// <summary>
+        /// The source (file, line, column and include chain) of the token that caused the error,
+        /// when a <see cref="ResponseFileExpander"/> was used and the source was tracked;
+        /// otherwise <see langword="null"/>.
+        /// </summary>
+        public TokenSource? Source { get; internal set; }
 
         /// <inheritdoc />
         public override string ToString() => Message;

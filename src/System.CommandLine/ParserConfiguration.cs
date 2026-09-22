@@ -40,5 +40,19 @@ namespace System.CommandLine
         /// When enabled, any token prefixed with <c>@</c> can be replaced with zero or more other tokens. This is mostly commonly used to expand tokens from response files and interpolate them into a command line prior to parsing.
         /// </remarks>
         public TryReplaceToken? ResponseFileTokenReplacer { get; set; } = StringExtensions.TryReadResponseFile;
+
+        /// <summary>
+        /// Gets or sets the response file expander used to expand <c>@file</c> references
+        /// before parsing, tracking the source (file, line, column and include chain) of
+        /// every token.
+        /// </summary>
+        /// <value><see langword="null"/> to use <see cref="ResponseFileTokenReplacer"/> instead. By default, no expander is configured.</value>
+        /// <remarks>
+        /// When an expander is configured, it takes precedence over <see cref="ResponseFileTokenReplacer"/>:
+        /// <c>@file</c> references are expanded up front, <c>@@name</c> is treated as the literal
+        /// token <c>@name</c>, and tokens after <c>--</c> are not expanded. Tokens and parse errors
+        /// produced this way carry a <see cref="TokenSource"/> describing where they came from.
+        /// </remarks>
+        public ResponseFileExpander? ResponseFileExpander { get; set; }
     }
 }

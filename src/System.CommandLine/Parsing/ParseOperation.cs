@@ -26,7 +26,7 @@ namespace System.CommandLine.Parsing
             List<Token> tokens,
             Command rootCommand,
             ParserConfiguration configuration,
-            List<string>? tokenizeErrors,
+            List<ParseError>? tokenizeErrors,
             string? rawInput)
         {
             _tokens = tokens;
@@ -62,6 +62,8 @@ namespace System.CommandLine.Parsing
 
             ValidateAndAddDefaultResults();
 
+            AttachTokenSourcesToErrors();
+
             return new(
                 _configuration,
                 _rootCommandResult,
@@ -72,6 +74,53 @@ namespace System.CommandLine.Parsing
                 _rawInput,
                 _primaryAction,
                 _preActions);
+        }
+
+        private void AttachTokenSourcesToErrors()
+        {
+            var errors = _symbolResultTree.Errors;
+
+            if (errors is null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < errors.Count; i++)
+            {
+                var error = errors[i];
+
+                if (error.Source is not null)
+                {
+                    continue;
+                }
+
+                for (SymbolResult? symbolResult = error.SymbolResult;
+                     symbolResult is not null && error.Source is null;
+                     symbolResult = symbolResult.Parent)
+                {
+                    TokenSource? source = symbolResult switch
+                    {
+                        OptionResult { IdentifierToken.Source: { } optionSource } => optionSource,
+                        CommandResult { IdentifierToken.Source: { } commandSource } => commandSource,
+                        _ => null
+                    };
+
+                    if (source is null)
+                    {
+                        var tokens = symbolResult.Tokens;
+                        for (var t = 0; t < tokens.Count; t++)
+                        {
+                            if (tokens[t].Source is { } tokenSource)
+                            {
+                                source = tokenSource;
+                                break;
+                            }
+                        }
+                    }
+
+                    error.Source = source;
+                }
+            }
         }
 
         private void ParseSubcommand()

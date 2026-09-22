@@ -13,8 +13,8 @@ namespace System.CommandLine.Parsing
         private Dictionary<string, SymbolNode>? _symbolsByName;
 
         internal SymbolResultTree(
-            Command? rootCommand = null, 
-            List<string>? tokenizeErrors = null)
+            Command? rootCommand = null,
+            List<ParseError>? tokenizeErrors = null)
         {
             _rootCommand = rootCommand;
 
@@ -24,7 +24,7 @@ namespace System.CommandLine.Parsing
 
                 for (var i = 0; i < tokenizeErrors.Count; i++)
                 {
-                    Errors.Add(new ParseError(tokenizeErrors[i]));
+                    Errors.Add(tokenizeErrors[i]);
                 }
             }
         }
@@ -72,7 +72,7 @@ namespace System.CommandLine.Parsing
                     return;
                 }
 
-                AddError(new ParseError(LocalizationResources.UnrecognizedCommandOrArgument(token.Value), commandResult));
+                AddError(new ParseError(LocalizationResources.UnrecognizedCommandOrArgument(token.Value), commandResult, token.Source));
             }
         }
 

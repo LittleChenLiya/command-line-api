@@ -30,12 +30,14 @@ namespace System.CommandLine.Parsing
             Command rootCommand,
             ParserConfiguration configuration,
             bool inferRootCommand,
+            IReadOnlyList<TokenSource?>? tokenSources,
+            bool responseFilesExpanded,
             out List<Token> tokens,
-            out List<string>? errors)
+            out List<ParseError>? errors)
         {
             const int FirstArgIsNotRootCommand = -1;
 
-            List<string>? errorList = null;
+            List<ParseError>? errorList = null;
 
             var currentCommand = rootCommand;
             var foundDoubleDash = false;
@@ -103,7 +105,8 @@ namespace System.CommandLine.Parsing
                     }
                 }
 
-                if (configuration.ResponseFileTokenReplacer is { } replacer &&
+                if (!responseFilesExpanded &&
+                    configuration.ResponseFileTokenReplacer is { } replacer &&
                     arg.GetReplaceableTokenValue() is { } value)
                 {
                     if (replacer(
@@ -121,7 +124,7 @@ namespace System.CommandLine.Parsing
                     }
                     else if (!string.IsNullOrWhiteSpace(error))
                     {
-                        (errorList ??= new()).Add(error!);
+                        (errorList ??= new()).Add(new ParseError(error!));
                         continue;
                     }
                 }
@@ -178,23 +181,28 @@ namespace System.CommandLine.Parsing
                     tokenList.Add(Argument(arg));
                 }
 
-                Token Argument(string value) => new(value, TokenType.Argument, default, i);
+                Token Argument(string value) => new(value, TokenType.Argument, default, i) { Source = SourceAt(i) };
 
-                Token CommandArgument(string value, Command command) => new(value, TokenType.Argument, command, i);
+                Token CommandArgument(string value, Command command) => new(value, TokenType.Argument, command, i) { Source = SourceAt(i) };
 
-                Token OptionArgument(string value, Option option) => new(value, TokenType.Argument, option, i);
+                Token OptionArgument(string value, Option option) => new(value, TokenType.Argument, option, i) { Source = SourceAt(i) };
 
-                Token Command(string value, Command cmd) => new(value, TokenType.Command, cmd, i);
+                Token Command(string value, Command cmd) => new(value, TokenType.Command, cmd, i) { Source = SourceAt(i) };
 
-                Token Option(string value, Option option) => new(value, TokenType.Option, option, i);
+                Token Option(string value, Option option) => new(value, TokenType.Option, option, i) { Source = SourceAt(i) };
 
-                Token DoubleDash() => new("--", TokenType.DoubleDash, default, i);
+                Token DoubleDash() => new("--", TokenType.DoubleDash, default, i) { Source = SourceAt(i) };
 
-                Token Directive(string value, Directive? directive) => new(value, TokenType.Directive, directive, i);
+                Token Directive(string value, Directive? directive) => new(value, TokenType.Directive, directive, i) { Source = SourceAt(i) };
             }
 
             tokens = tokenList;
             errors = errorList;
+
+            TokenSource? SourceAt(int index) =>
+                tokenSources is not null && index >= 0 && index < tokenSources.Count
+                    ? tokenSources[index]
+                    : null;
 
             bool CanBeUnbundled(string arg)
                 => arg.Length > 2
@@ -212,7 +220,7 @@ namespace System.CommandLine.Parsing
                 {
                     if (alias[i] == ':' || alias[i] == '=')
                     {
-                        tokenList.Add(new Token(alias.Slice(i + 1).ToString(), TokenType.Argument, default, argumentIndex));
+                        tokenList.Add(new Token(alias.Slice(i + 1).ToString(), TokenType.Argument, default, argumentIndex) { Source = SourceAt(argumentIndex) });
                         return true;
                     }
 
@@ -222,14 +230,14 @@ namespace System.CommandLine.Parsing
                         if (tokensBefore != tokenList.Count && tokenList[tokenList.Count - 1].Type == TokenType.Option)
                         {
                             // Invalid_char_in_bundle_causes_rest_to_be_interpreted_as_value
-                            tokenList.Add(new Token(alias.Slice(i).ToString(), TokenType.Argument, default, argumentIndex));
+                            tokenList.Add(new Token(alias.Slice(i).ToString(), TokenType.Argument, default, argumentIndex) { Source = SourceAt(argumentIndex) });
                             return true;
                         }
 
                         return false;
                     }
 
-                    tokenList.Add(new Token(found.Value, found.Type, found.Symbol, argumentIndex));
+                    tokenList.Add(new Token(found.Value, found.Type, found.Symbol, argumentIndex) { Source = SourceAt(argumentIndex) });
                     if (i != alias.Length - 1 && ((Option)found.Symbol!).Greedy)
                     {
                         int index = i + 1;
@@ -237,7 +245,7 @@ namespace System.CommandLine.Parsing
                         {
                             index++; // Last_bundled_option_can_accept_argument_with_colon_separator
                         }
-                        tokenList.Add(new Token(alias.Slice(index).ToString(), TokenType.Argument, default, argumentIndex));
+                        tokenList.Add(new Token(alias.Slice(index).ToString(), TokenType.Argument, default, argumentIndex) { Source = SourceAt(argumentIndex) });
                         return true;
                     }
                 }

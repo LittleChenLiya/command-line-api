@@ -148,12 +148,37 @@ namespace System.CommandLine.Parsing
 
             configuration ??= new ParserConfiguration();
 
+            IReadOnlyList<TokenSource?>? tokenSources = null;
+            List<ParseError>? expansionErrors = null;
+            var responseFilesExpanded = false;
+
+            if (configuration.ResponseFileExpander is { } expander)
+            {
+                ResponseFileExpansionResult expansion = expander.Expand(arguments);
+
+                arguments = expansion.Arguments;
+                tokenSources = expansion.Sources;
+                responseFilesExpanded = true;
+
+                if (expansion.Errors.Count > 0)
+                {
+                    expansionErrors = new List<ParseError>(expansion.Errors);
+                }
+            }
+
             arguments.Tokenize(
                 command,
                 configuration,
                 inferRootCommand: rawInput is not null,
+                tokenSources,
+                responseFilesExpanded,
                 out List<Token> tokens,
-                out List<string>? tokenizationErrors);
+                out List<ParseError>? tokenizationErrors);
+
+            if (expansionErrors is not null)
+            {
+                (tokenizationErrors ??= new()).InsertRange(0, expansionErrors);
+            }
 
             var operation = new ParseOperation(
                 tokens,
