@@ -59,6 +59,15 @@
     public System.Void SetAction(System.Func<ParseResult,System.Threading.Tasks.Task> action)
     public System.Void SetAction(System.Func<ParseResult,System.Threading.Tasks.Task<System.Int32>> action)
     public System.Void SetAction(System.Func<ParseResult,System.Threading.CancellationToken,System.Threading.Tasks.Task<System.Int32>> action)
+  public static class CommandSequence
+    public static CommandSequencePlan Parse(Command command, System.Collections.Generic.IReadOnlyList<System.String> args, ParserConfiguration configuration = null)
+    public static CommandSequencePlan Parse(Command command, System.String commandLine, ParserConfiguration configuration = null)
+  public class CommandSequencePlan
+    public System.Collections.Generic.IReadOnlyList<SequenceError> Errors { get; }
+    public System.Boolean IsValid { get; }
+    public System.Collections.Generic.IReadOnlyList<ParseResult> ParseResults { get; }
+    public System.Int32 Invoke(InvocationConfiguration configuration = null)
+    public System.Threading.Tasks.Task<System.Int32> InvokeAsync(InvocationConfiguration configuration = null, System.Threading.CancellationToken cancellationToken = null)
   public static class CompletionSourceExtensions
     public static System.Void Add(this System.Collections.Generic.List<System.Func<System.CommandLine.Completions.CompletionContext,System.Collections.Generic.IEnumerable<System.CommandLine.Completions.CompletionItem>>> completionSources, System.Func<System.CommandLine.Completions.CompletionContext,System.Collections.Generic.IEnumerable<System.String>> completionsDelegate)
     public static System.Void Add(this System.Collections.Generic.List<System.Func<System.CommandLine.Completions.CompletionContext,System.Collections.Generic.IEnumerable<System.CommandLine.Completions.CompletionItem>>> completionSources, System.String[] completions)
@@ -144,6 +153,11 @@
     public System.Collections.Generic.IList<Directive> Directives { get; }
     public System.String HelpName { get; set; }
     public System.Void Add(Directive directive)
+  public class SequenceError
+    public System.Int32 ArgumentPosition { get; }
+    public System.String Message { get; }
+    public System.Int32 StageNumber { get; }
+    public System.String ToString()
   public abstract class Symbol
     public System.String Description { get; set; }
     public System.Boolean Hidden { get; set; }
