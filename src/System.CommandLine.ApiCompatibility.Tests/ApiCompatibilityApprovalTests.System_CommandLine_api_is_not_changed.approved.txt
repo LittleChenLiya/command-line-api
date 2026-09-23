@@ -144,6 +144,19 @@
     public System.Collections.Generic.IList<Directive> Directives { get; }
     public System.String HelpName { get; set; }
     public System.Void Add(Directive directive)
+  public class SequenceInvocationPlan
+    public System.Collections.Generic.IReadOnlyList<SequenceParseError> Errors { get; }
+    public System.Boolean IsValid { get; }
+    public System.Collections.Generic.IReadOnlyList<ParseResult> Stages { get; }
+    public System.Int32 Invoke(InvocationConfiguration configuration = null)
+    public System.Threading.Tasks.Task<System.Int32> InvokeAsync(InvocationConfiguration configuration = null, System.Threading.CancellationToken cancellationToken = null)
+  public class SequenceParseError
+    public System.String Message { get; }
+    public System.Int32 Position { get; }
+    public System.Int32 Stage { get; }
+    public System.String ToString()
+  public static class SequenceParser
+    public static SequenceInvocationPlan ParseSequence(this Command command, System.Collections.Generic.IReadOnlyList<System.String> args, ParserConfiguration configuration = null)
   public abstract class Symbol
     public System.String Description { get; set; }
     public System.Boolean Hidden { get; set; }
