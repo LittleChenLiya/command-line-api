@@ -70,6 +70,12 @@
     .ctor(System.String name)
     public System.CommandLine.Invocation.CommandLineAction Action { get; set; }
     public System.Collections.Generic.IEnumerable<System.CommandLine.Completions.CompletionItem> GetCompletions(System.CommandLine.Completions.CompletionContext context)
+  public class EnvironmentVariableBinding
+    .ctor(System.String variableName)
+    public System.Char Delimiter { get; set; }
+    public System.Char EscapeCharacter { get; set; }
+    public System.Boolean IsSensitive { get; set; }
+    public System.String VariableName { get; }
   public class EnvironmentVariablesDirective : Directive
     .ctor()
     public System.CommandLine.Invocation.CommandLineAction Action { get; set; }
@@ -85,6 +91,7 @@
     public System.Boolean AllowMultipleArgumentsPerToken { get; set; }
     public ArgumentArity Arity { get; set; }
     public System.Collections.Generic.List<System.Func<System.CommandLine.Completions.CompletionContext,System.Collections.Generic.IEnumerable<System.CommandLine.Completions.CompletionItem>>> CompletionSources { get; }
+    public EnvironmentVariableBinding EnvironmentVariableBinding { get; set; }
     public System.Boolean HasDefaultValue { get; }
     public System.String HelpName { get; set; }
     public System.Boolean Recursive { get; set; }
@@ -110,6 +117,7 @@
   public class ParserConfiguration
     .ctor()
     public System.Boolean EnablePosixBundling { get; set; }
+    public System.Func<System.String,System.String> EnvironmentVariableReader { get; set; }
     public System.CommandLine.Parsing.TryReplaceToken ResponseFileTokenReplacer { get; set; }
   public class ParseResult
     public System.CommandLine.Invocation.CommandLineAction Action { get; }
@@ -226,6 +234,7 @@ System.CommandLine.Parsing
     public Token Token { get; }
     public System.Collections.Generic.IReadOnlyList<System.String> Values { get; }
   public class OptionResult : SymbolResult
+    public System.CommandLine.EnvironmentVariableBinding EnvironmentVariableSource { get; }
     public Token IdentifierToken { get; }
     public System.Int32 IdentifierTokenCount { get; }
     public System.Boolean Implicit { get; }

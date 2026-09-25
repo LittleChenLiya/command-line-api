@@ -78,7 +78,15 @@ namespace System.CommandLine.Parsing
                         builder.Append(' ');
                     }
 
-                    if (argumentResult.Argument.Arity.MaximumNumberOfValues > 0)
+                    if (argumentResult.Parent is OptionResult { Option.EnvironmentVariableBinding.IsSensitive: true })
+                    {
+                        // Sensitive values are never echoed in the diagram.
+                        if (argumentResult.Argument.Arity.MaximumNumberOfValues > 0)
+                        {
+                            builder.Append("<***>");
+                        }
+                    }
+                    else if (argumentResult.Argument.Arity.MaximumNumberOfValues > 0)
                     {
                         ArgumentConversionResult conversionResult = argumentResult.GetArgumentConversionResult();
                         switch (conversionResult.Result)

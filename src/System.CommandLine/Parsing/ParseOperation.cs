@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
+using System.CommandLine.Help;
 using System.CommandLine.Invocation;
 using System.Linq;
 
@@ -21,6 +22,8 @@ namespace System.CommandLine.Parsing
         private CommandLineAction? _primaryAction;
         private List<CommandLineAction>? _preActions;
         private readonly Command _rootCommand;
+        private bool _skipEnvironmentVariableFallback;
+        private Dictionary<string, string?>? _environmentVariableCache;
 
         public ParseOperation(
             List<Token> tokens,
@@ -59,6 +62,8 @@ namespace System.CommandLine.Parsing
             ParseDirectives();
 
             ParseCommandChildren();
+
+            ApplyEnvironmentVariableFallbacks();
 
             ValidateAndAddDefaultResults();
 
@@ -360,6 +365,14 @@ namespace System.CommandLine.Parsing
                     {
                         _primaryAction = directive.Action;
                         _isTerminatingDirectiveSpecified = true;
+
+                        if (directive is not DiagramDirective)
+                        {
+                            // Terminating directives such as [suggest] (completions) must not
+                            // trigger environment variable reads. The [diagram] directive still
+                            // resolves fallbacks so that it can explain the effective values.
+                            _skipEnvironmentVariableFallback = true;
+                        }
                     }
                     else
                     {
@@ -367,6 +380,96 @@ namespace System.CommandLine.Parsing
                     }
                 }
             }
+        }
+
+        private void ApplyEnvironmentVariableFallbacks()
+        {
+            // Help and completion paths must not read the environment.
+            if (_skipEnvironmentVariableFallback || _primaryAction is HelpAction)
+            {
+                return;
+            }
+
+            CommandResult? commandResult = _innermostCommandResult;
+
+            while (commandResult is not null)
+            {
+                bool isInnermostCommand = ReferenceEquals(commandResult, _innermostCommandResult);
+
+                if (commandResult.Command.HasOptions)
+                {
+                    var options = commandResult.Command.Options;
+
+                    for (var i = 0; i < options.Count; i++)
+                    {
+                        Option option = options[i];
+
+                        if (option.EnvironmentVariableBinding is not { } binding)
+                        {
+                            continue;
+                        }
+
+                        if (!isInnermostCommand && !option.Recursive && !option.Argument.HasDefaultValue)
+                        {
+                            // Mirror the default value behavior for parent commands.
+                            continue;
+                        }
+
+                        if (_symbolResultTree.ContainsKey(option))
+                        {
+                            // An explicit command line value takes precedence over the environment.
+                            continue;
+                        }
+
+                        if (!TryReadEnvironmentVariable(binding.VariableName, out string? value))
+                        {
+                            // The variable is not set; default value handling applies.
+                            continue;
+                        }
+
+                        Argument argument = option.Argument;
+
+                        OptionResult optionResult = new(option, _symbolResultTree, null, commandResult)
+                        {
+                            EnvironmentVariableSource = binding
+                        };
+
+                        ArgumentResult argumentResult = new(argument, _symbolResultTree, optionResult)
+                        {
+                            EnvironmentVariableSource = binding
+                        };
+
+                        bool allowMultipleValues = argument.Arity.MaximumNumberOfValues > 1;
+
+                        foreach (string argumentValue in binding.SplitValue(value!, allowMultipleValues))
+                        {
+                            Token token = new(argumentValue, TokenType.Argument, argument);
+                            argumentResult.AddToken(token);
+                            optionResult.AddToken(token);
+                        }
+
+                        _symbolResultTree.Add(option, optionResult);
+                        _symbolResultTree.Add(argument, argumentResult);
+                    }
+                }
+
+                commandResult = commandResult.Parent as CommandResult;
+            }
+        }
+
+        private bool TryReadEnvironmentVariable(string name, out string? value)
+        {
+            if (_environmentVariableCache is null || !_environmentVariableCache.TryGetValue(name, out value))
+            {
+                // Each variable is read at most once per parse; the cached values form
+                // a fixed snapshot for the remainder of this parse operation.
+                Func<string, string?> reader = _configuration.EnvironmentVariableReader ?? Environment.GetEnvironmentVariable;
+                value = reader(name);
+                (_environmentVariableCache ??= new(StringComparer.Ordinal))[name] = value;
+            }
+
+            // A variable that is set to an empty string is an explicitly provided value.
+            return value is not null;
         }
 
         private void AddPreAction(CommandLineAction action)

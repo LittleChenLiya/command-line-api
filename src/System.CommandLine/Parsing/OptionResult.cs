@@ -44,6 +44,17 @@ namespace System.CommandLine.Parsing
         /// </summary>
         public int IdentifierTokenCount { get; internal set; }
 
+        /// <summary>
+        /// Gets the environment variable binding that provided this option's value, or
+        /// <see langword="null"/> when the value did not come from an environment variable.
+        /// </summary>
+        /// <remarks>
+        /// This property is only set when the option was not specified on the command line and the
+        /// bound environment variable was set. It can be used to determine the source of the parsed
+        /// value without exposing the value itself.
+        /// </remarks>
+        public EnvironmentVariableBinding? EnvironmentVariableSource { get; internal set; }
+
         /// <inheritdoc/>
         public override string ToString() => $"{nameof(OptionResult)}: {IdentifierToken?.Value ?? Option.Name} {string.Join(" ", Tokens.Select(t => t.Value))}";
 
@@ -62,6 +73,12 @@ namespace System.CommandLine.Parsing
 
         internal override bool UseDefaultValueFor(ArgumentResult argumentResult)
         {
+            if (EnvironmentVariableSource is not null)
+            {
+                // Environment variable values take precedence over default values.
+                return false;
+            }
+
             if (Implicit)
             {
                 return true;

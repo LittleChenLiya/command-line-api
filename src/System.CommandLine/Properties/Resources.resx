@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -224,5 +224,11 @@
   </data>
   <data name="ArgumentConversionCannotParseForOption_Completions" xml:space="preserve">
     <value>Cannot parse argument '{0}' for option '{1}' as expected type '{2}'. Did you mean one of the following?{3}</value>
+  </data>
+  <data name="EnvironmentVariableArgumentConversionCannotParseForOption" xml:space="preserve">
+    <value>Cannot parse the value '{0}' provided by environment variable '{1}' for option '{2}' as expected type '{3}'.</value>
+  </data>
+  <data name="EnvironmentVariableArgumentConversionCannotParseForSensitiveOption" xml:space="preserve">
+    <value>Cannot parse the value provided by environment variable '{0}' for option '{1}' as expected type '{2}'. The value is hidden because the option is sensitive.</value>
   </data>
 </root>

@@ -236,6 +236,18 @@ namespace System.CommandLine
                 value, optionAlias, expectedType, Environment.NewLine + string.Join(Environment.NewLine, completions));
 
         /// <summary>
+        ///   Interpolates values into a localized string similar to Cannot parse the value &apos;{0}&apos; provided by environment variable &apos;{1}&apos; for option &apos;{2}&apos; as expected type {3}..
+        /// </summary>
+        internal static string EnvironmentVariableArgumentConversionCannotParseForOption(string value, string variableName, string optionAlias, Type expectedType)
+            => GetResourceString(Properties.Resources.EnvironmentVariableArgumentConversionCannotParseForOption, value, variableName, optionAlias, expectedType);
+
+        /// <summary>
+        ///   Interpolates values into a localized string similar to Cannot parse the value provided by environment variable &apos;{0}&apos; for option &apos;{1}&apos; as expected type {2}. The value is hidden because the option is sensitive..
+        /// </summary>
+        internal static string EnvironmentVariableArgumentConversionCannotParseForSensitiveOption(string variableName, string optionAlias, Type expectedType)
+            => GetResourceString(Properties.Resources.EnvironmentVariableArgumentConversionCannotParseForSensitiveOption, variableName, optionAlias, expectedType);
+
+        /// <summary>
         /// Interpolates values into a localized string.
         /// </summary>
         /// <param name="resourceString">The string template into which values will be interpolated.</param>

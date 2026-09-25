@@ -28,6 +28,12 @@ namespace System.CommandLine.Parsing
         /// </summary>
         public Argument Argument { get; }
 
+        /// <summary>
+        /// When the argument's tokens were provided by an environment variable fallback,
+        /// this holds the binding that supplied them; otherwise it is <see langword="null"/>.
+        /// </summary>
+        internal EnvironmentVariableBinding? EnvironmentVariableSource { get; set; }
+
         internal bool ArgumentLimitReached => Argument.Arity.MaximumNumberOfValues == (_tokens?.Count ?? 0);
 
         public bool Implicit { get; private set; }
@@ -219,12 +225,20 @@ namespace System.CommandLine.Parsing
             }
 
             return ReportErrorIfNeeded(
-                ArgumentConversionResult.ArgumentConversionCannotParse(
-                    this,
-                    Argument.ValueType,
-                    Tokens.Count > 0
-                        ? Tokens[0].Value
-                        : ""));
+                EnvironmentVariableSource is { } environmentVariableBinding
+                    ? ArgumentConversionResult.EnvironmentVariableArgumentConversionCannotParse(
+                        this,
+                        Argument.ValueType,
+                        Tokens.Count > 0
+                            ? Tokens[0].Value
+                            : "",
+                        environmentVariableBinding)
+                    : ArgumentConversionResult.ArgumentConversionCannotParse(
+                        this,
+                        Argument.ValueType,
+                        Tokens.Count > 0
+                            ? Tokens[0].Value
+                            : ""));
 
             ArgumentConversionResult ReportErrorIfNeeded(ArgumentConversionResult result)
             {

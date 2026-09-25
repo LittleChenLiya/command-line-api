@@ -27,4 +27,7 @@
     <Project Path="src/System.CommandLine.Tests/System.CommandLine.Tests.csproj" />
     <Project Path="src/System.CommandLine/System.CommandLine.csproj" />
   </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/EnvironmentVariableFallback/EnvironmentVariableFallback.csproj" />
+  </Folder>
 </Solution>

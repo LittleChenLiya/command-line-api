@@ -40,5 +40,21 @@ namespace System.CommandLine
         /// When enabled, any token prefixed with <c>@</c> can be replaced with zero or more other tokens. This is mostly commonly used to expand tokens from response files and interpolate them into a command line prior to parsing.
         /// </remarks>
         public TryReplaceToken? ResponseFileTokenReplacer { get; set; } = StringExtensions.TryReadResponseFile;
+
+        /// <summary>
+        /// Gets or sets the delegate used to read environment variable values when resolving
+        /// <see cref="Option.EnvironmentVariableBinding"/> fallbacks.
+        /// </summary>
+        /// <value>
+        /// A function that takes an environment variable name and returns its value, or
+        /// <see langword="null"/> when the variable is not set. When this property is
+        /// <see langword="null"/>, <see cref="Environment.GetEnvironmentVariable(string)"/> is used.
+        /// </value>
+        /// <remarks>
+        /// Each variable is read at most once per parse operation; the value is then cached for the
+        /// remainder of that parse. Consecutive parse operations read the environment again, so changes
+        /// made between parses are observed. The reader is not invoked when computing help or completions.
+        /// </remarks>
+        public Func<string, string?>? EnvironmentVariableReader { get; set; }
     }
 }

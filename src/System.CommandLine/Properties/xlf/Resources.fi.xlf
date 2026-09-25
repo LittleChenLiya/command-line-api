@@ -182,6 +182,16 @@
         <target state="translated">Näytä versiotiedot</target>
         <note />
       </trans-unit>
+      <trans-unit id="EnvironmentVariableArgumentConversionCannotParseForOption">
+        <source>Cannot parse the value '{0}' provided by environment variable '{1}' for option '{2}' as expected type '{3}'.</source>
+        <target state="new">Cannot parse the value '{0}' provided by environment variable '{1}' for option '{2}' as expected type '{3}'.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="EnvironmentVariableArgumentConversionCannotParseForSensitiveOption">
+        <source>Cannot parse the value provided by environment variable '{0}' for option '{1}' as expected type '{2}'. The value is hidden because the option is sensitive.</source>
+        <target state="new">Cannot parse the value provided by environment variable '{0}' for option '{1}' as expected type '{2}'. The value is hidden because the option is sensitive.</target>
+        <note />
+      </trans-unit>
     </body>
   </file>
 </xliff>

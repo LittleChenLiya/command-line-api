@@ -1,4 +1,4 @@
-﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
+// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.CommandLine.Completions;
@@ -33,6 +33,26 @@ namespace System.CommandLine.Binding
 
         internal static ArgumentConversionResult ArgumentConversionCannotParse(ArgumentResult argumentResult, Type expectedType, string value)
             => new(argumentResult, FormatErrorMessage(argumentResult, expectedType, value), ArgumentConversionResultType.FailedType);
+
+        internal static ArgumentConversionResult EnvironmentVariableArgumentConversionCannotParse(
+            ArgumentResult argumentResult,
+            Type expectedType,
+            string value,
+            EnvironmentVariableBinding binding)
+        {
+            string optionName = argumentResult.Parent is OptionResult optionResult
+                ? optionResult.Option.Name
+                : argumentResult.Argument.Name;
+
+            // Sensitive values are never echoed; the environment variable name still identifies the source.
+            string message = binding.IsSensitive
+                ? LocalizationResources.EnvironmentVariableArgumentConversionCannotParseForSensitiveOption(
+                    binding.VariableName, optionName, expectedType)
+                : LocalizationResources.EnvironmentVariableArgumentConversionCannotParseForOption(
+                    value, binding.VariableName, optionName, expectedType);
+
+            return new(argumentResult, message, ArgumentConversionResultType.FailedType);
+        }
 
         public static ArgumentConversionResult Success(ArgumentResult argumentResult, object? value)
             => new(argumentResult, value, ArgumentConversionResultType.Successful);

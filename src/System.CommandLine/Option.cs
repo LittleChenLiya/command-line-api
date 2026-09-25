@@ -119,6 +119,18 @@ namespace System.CommandLine
         public bool Required { get; set; }
 
         /// <summary>
+        /// Gets or sets the environment variable fallback binding for the option.
+        /// </summary>
+        /// <remarks>
+        /// When set and the option is not specified on the command line, the parser reads the configured
+        /// environment variable once per parse operation and converts its value using the same argument
+        /// converter that is used for command line values. An explicit command line value takes precedence
+        /// over the environment variable value, which in turn takes precedence over the option's default value.
+        /// Options without a binding are not affected by environment variables.
+        /// </remarks>
+        public EnvironmentVariableBinding? EnvironmentVariableBinding { get; set; }
+
+        /// <summary>
         /// Gets the unique set of strings that can be used on the command line to specify the Option.
         /// </summary>
         /// <remarks>The collection does not contain the <see cref="Symbol.Name"/> of the Option.</remarks>
