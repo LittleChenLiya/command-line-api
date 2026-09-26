@@ -1,6 +1,8 @@
 ﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Generic;
+using System.CommandLine.Parsing;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,6 +19,22 @@ namespace System.CommandLine.Invocation
             {
                 int actionResult = 0;
                 int preActionResult = 0;
+
+                if (parseResult.Errors.Count == 0 && parseResult.CommandResult.Command.HasAsyncValidators)
+                {
+                    IReadOnlyList<ValidationDiagnostic> diagnostics =
+                        await AsyncValidationRunner.ValidateAsync(parseResult, cts.Token);
+
+                    if (diagnostics.Count > 0)
+                    {
+                        for (int i = 0; i < diagnostics.Count; i++)
+                        {
+                            parseResult.AddError(new ParseError(diagnostics[i].Message));
+                        }
+
+                        return new ParseErrorAction().Invoke(parseResult);
+                    }
+                }
 
                 if (parseResult.PreActions is not null)
                 {
@@ -101,6 +119,11 @@ namespace System.CommandLine.Invocation
             {
                 int preActionResult = 0;
 
+                if (parseResult.CommandResult.Command.HasAsyncValidators)
+                {
+                    throw new InvalidOperationException(AsyncValidatorsRequireInvokeAsync(parseResult));
+                }
+
                 if (parseResult.PreActions is not null)
                 {
                     for (var i = 0; i < parseResult.PreActions.Count; i++)
@@ -152,6 +175,12 @@ namespace System.CommandLine.Invocation
             }
             return 1;
         }
+
+        internal static string AsyncValidatorsRequireInvokeAsync(ParseResult parseResult)
+            => $"The command '{parseResult.CommandResult.Command.Name}' has asynchronous validators registered " +
+               $"({nameof(Command)}.{nameof(Command.AsyncValidators)}). Synchronous invocation cannot run them " +
+               $"and blocking on them (for example with Task.Result) can deadlock. " +
+               $"Use {nameof(ParseResult)}.{nameof(ParseResult.InvokeAsync)} instead.";
 
         private static int ReturnCodeForMissingAction(ParseResult parseResult)
         {

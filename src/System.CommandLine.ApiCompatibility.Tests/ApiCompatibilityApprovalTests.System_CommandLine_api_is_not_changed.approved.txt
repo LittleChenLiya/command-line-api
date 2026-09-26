@@ -37,11 +37,16 @@
     public static Argument<T> AcceptLegalFilePathsOnly<T>(this Argument<T> argument)
     public static Argument<T> AcceptOnlyFromAmong<T>(this Argument<T> argument, System.String[] values)
     public static Argument<T> AcceptOnlyFromAmong<T>(this Argument<T> argument, System.StringComparer comparer, System.String[] values)
+  public class AsyncValidator
+    .ctor(System.String name, System.Func<ParseResult,System.Threading.CancellationToken,System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ValidationDiagnostic>>> validate)
+    public System.String Name { get; }
+    public System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ValidationDiagnostic>> ValidateAsync(ParseResult parseResult, System.Threading.CancellationToken cancellationToken = null)
   public class Command : Symbol, System.Collections.IEnumerable
     .ctor(System.String name, System.String description = null)
     public System.CommandLine.Invocation.CommandLineAction Action { get; set; }
     public System.Collections.Generic.ICollection<System.String> Aliases { get; }
     public System.Collections.Generic.IList<Argument> Arguments { get; }
+    public System.Collections.Generic.List<AsyncValidator> AsyncValidators { get; }
     public System.Collections.Generic.IEnumerable<Symbol> Children { get; }
     public System.Collections.Generic.IList<Option> Options { get; }
     public System.Collections.Generic.IList<Command> Subcommands { get; }
@@ -77,6 +82,7 @@
     .ctor()
     public System.Boolean EnableDefaultExceptionHandler { get; set; }
     public System.IO.TextWriter Error { get; set; }
+    public System.Int32 MaxAsyncValidatorConcurrency { get; set; }
     public System.IO.TextWriter Output { get; set; }
     public System.Nullable<System.TimeSpan> ProcessTerminationTimeout { get; set; }
   public abstract class Option : Symbol
@@ -150,6 +156,11 @@
     public System.String Name { get; }
     public System.Collections.Generic.IEnumerable<Symbol> Parents { get; }
     public System.Collections.Generic.IEnumerable<System.CommandLine.Completions.CompletionItem> GetCompletions(System.CommandLine.Completions.CompletionContext context)
+    public System.String ToString()
+  public class ValidationDiagnostic
+    .ctor(System.String message, System.String validatorName = null)
+    public System.String Message { get; }
+    public System.String ValidatorName { get; }
     public System.String ToString()
   public class VersionOption : Option
     .ctor()

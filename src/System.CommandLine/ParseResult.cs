@@ -88,7 +88,19 @@ namespace System.CommandLine
         /// <summary>
         /// Gets the parse errors found while parsing command-line input.
         /// </summary>
-        public IReadOnlyList<ParseError> Errors { get; }
+        public IReadOnlyList<ParseError> Errors { get; private set; }
+
+        internal void AddError(ParseError error)
+        {
+            if (Errors is List<ParseError> list)
+            {
+                list.Add(error);
+            }
+            else
+            {
+                Errors = new List<ParseError>(Errors) { error };
+            }
+        }
 
         /// <summary>
         /// Gets the tokens identified while parsing command-line input.
@@ -299,6 +311,13 @@ namespace System.CommandLine
             if (configuration is not null)
             {
                 InvocationConfiguration = configuration;
+            }
+
+            if (CommandResult.Command.HasAsyncValidators)
+            {
+                // Asynchronous validators are only supported by InvokeAsync. Blocking on them
+                // here (for example with Task.Result) could deadlock, so fail fast with guidance.
+                throw new InvalidOperationException(InvocationPipeline.AsyncValidatorsRequireInvokeAsync(this));
             }
 
             if (Action is AsynchronousCommandLineAction)
