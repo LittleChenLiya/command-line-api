@@ -113,6 +113,7 @@
     public System.CommandLine.Parsing.TryReplaceToken ResponseFileTokenReplacer { get; set; }
   public class ParseResult
     public System.CommandLine.Invocation.CommandLineAction Action { get; }
+    public System.Collections.Generic.IReadOnlyList<System.String> Arguments { get; }
     public System.CommandLine.Parsing.CommandResult CommandResult { get; }
     public ParserConfiguration Configuration { get; }
     public System.Collections.Generic.IReadOnlyList<System.CommandLine.Parsing.ParseError> Errors { get; }
@@ -122,6 +123,7 @@
     public System.Collections.Generic.IReadOnlyList<System.String> UnmatchedTokens { get; }
     public System.CommandLine.Completions.CompletionContext GetCompletionContext()
     public System.Collections.Generic.IEnumerable<System.CommandLine.Completions.CompletionItem> GetCompletions(System.Nullable<System.Int32> position = null)
+    public System.CommandLine.Execution.ExecutionPlan GetExecutionPlan()
     public T GetRequiredValue<T>(Argument<T> argument)
     public T GetRequiredValue<T>(Option<T> option)
     public T GetRequiredValue<T>(System.String name)
@@ -180,6 +182,49 @@ System.CommandLine.Completions
     public System.String CommandLineText { get; }
     public System.Int32 CursorPosition { get; }
     public TextCompletionContext AtCursorPosition(System.Int32 position)
+System.CommandLine.Execution
+  public class ArgumentExecutionPlan : SymbolExecutionPlan
+    public System.String ToString()
+  public class CommandExecutionPlan
+    public System.Collections.Generic.IReadOnlyList<ArgumentExecutionPlan> Arguments { get; }
+    public System.String CanonicalName { get; }
+    public System.Collections.Generic.IReadOnlyList<InputTokenSpan> IdentifierSpans { get; }
+    public System.Collections.Generic.IReadOnlyList<OptionExecutionPlan> Options { get; }
+    public System.String ToString()
+  public class ExecutionPlan
+    public System.Collections.Generic.IReadOnlyList<CommandExecutionPlan> Commands { get; }
+    public System.Collections.Generic.IReadOnlyList<ParsedTokenValue> UnmatchedTokens { get; }
+    public System.String ToString()
+  public struct InputTokenSpan : System.ValueType, System.IEquatable<InputTokenSpan>
+    public static System.Boolean op_Equality(InputTokenSpan left, InputTokenSpan right)
+    public static System.Boolean op_Inequality(InputTokenSpan left, InputTokenSpan right)
+    .ctor(System.Int32 argumentIndex, System.Int32 start, System.Int32 length)
+    public System.Int32 ArgumentIndex { get; }
+    public System.Int32 Length { get; }
+    public System.Int32 Start { get; }
+    public System.Boolean Equals(InputTokenSpan other)
+    public System.Boolean Equals(System.Object obj)
+    public System.Int32 GetHashCode()
+    public System.String GetText(System.Collections.Generic.IReadOnlyList<System.String> arguments)
+    public System.String ToString()
+  public class OptionExecutionPlan : SymbolExecutionPlan
+    public System.Collections.Generic.IReadOnlyList<InputTokenSpan> IdentifierSpans { get; }
+    public System.String ToString()
+  public class ParsedTokenValue
+    public System.Boolean AfterDoubleDash { get; }
+    public InputTokenSpan Span { get; }
+    public System.String TokenValue { get; }
+    public System.String ToString()
+  public enum ParsedValueSource : System.Enum, System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable
+    None=0
+    Explicit=1
+    Default=2
+  public abstract class SymbolExecutionPlan
+    public System.String CanonicalName { get; }
+    public System.String ConversionError { get; }
+    public ParsedValueSource Source { get; }
+    public System.Object Value { get; }
+    public System.Collections.Generic.IReadOnlyList<ParsedTokenValue> Values { get; }
 System.CommandLine.Help
   public class HelpAction : System.CommandLine.Invocation.SynchronousCommandLineAction
     .ctor()

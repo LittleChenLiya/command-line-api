@@ -18,6 +18,8 @@ namespace System.CommandLine
     {
         private readonly CommandResult _rootCommandResult;
         private readonly IReadOnlyList<Token> _unmatchedTokens;
+        private readonly IReadOnlyList<string> _arguments;
+        private readonly IReadOnlyList<Token> _allTokens;
         private CompletionContext? _completionContext;
         private readonly CommandLineAction? _action;
         private readonly List<CommandLineAction>? _preActions;
@@ -31,6 +33,7 @@ namespace System.CommandLine
             List<Token>? unmatchedTokens,
             List<ParseError>? errors,
             string? commandLineText = null,
+            IReadOnlyList<string>? arguments = null,
             CommandLineAction? action = null,
             List<CommandLineAction>? preActions = null)
         {
@@ -39,6 +42,7 @@ namespace System.CommandLine
             CommandResult = commandResult;
             _action = action;
             _preActions = preActions;
+            _arguments = arguments ?? Array.Empty<string>();
 
             // skip the root command when populating Tokens property
             if (tokens.Count > 1)
@@ -46,11 +50,13 @@ namespace System.CommandLine
                 // Since TokenizeResult.Tokens is not public and not used anywhere after the parsing,
                 // we take advantage of its mutability and remove the root command token
                 // instead of creating a copy of the whole list.
+                _allTokens = tokens.ToArray();
                 tokens.RemoveAt(0);
                 Tokens = tokens;
             }
             else
             {
+                _allTokens = tokens.ToArray();
                 Tokens = [];
             }
 
@@ -94,6 +100,19 @@ namespace System.CommandLine
         /// Gets the tokens identified while parsing command-line input.
         /// </summary>
         public IReadOnlyList<Token> Tokens { get; }
+
+        /// <summary>
+        /// Gets the original arguments passed to the parser, in the same order and without any transformation.
+        /// </summary>
+        /// <remarks>
+        /// Indexes exposed from <see cref="Execution.InputTokenSpan.ArgumentIndex"/> refer to positions in this list.
+        /// </remarks>
+        public IReadOnlyList<string> Arguments => _arguments;
+
+        /// <summary>
+        /// Gets every token produced during tokenization, including the root command token and <c>--</c> terminators.
+        /// </summary>
+        internal IReadOnlyList<Token> AllTokens => _allTokens;
 
         /// <summary>
         /// Gets the value of a complete command line input prior to splitting and tokenization, when provided.
@@ -171,6 +190,19 @@ namespace System.CommandLine
         /// <exception cref="InvalidCastException">The parsed result cannot be cast to <typeparamref name="T"/>.</exception>
         public T GetRequiredValue<T>(string name)
             => RootCommandResult.GetRequiredValue<T>(name);
+
+        /// <summary>
+        /// Builds a read-only description of how the current parse result is going to be executed: the selected command
+        /// chain and, for each command, the options and arguments with their canonical names, converted values,
+        /// explicit-vs-default provenance, and the exact spans of the original input tokens from which each value came.
+        /// </summary>
+        /// <remarks>
+        /// The result is intended for logging and confirmation screens. Building it does not call
+        /// <see cref="object.ToString"/> on converted values and does not perform any side effects beyond those
+        /// already performed while parsing.
+        /// </remarks>
+        /// <returns>A read-only execution plan for this parse result.</returns>
+        public Execution.ExecutionPlan GetExecutionPlan() => Execution.ExecutionPlanBuilder.Build(this);
 
         /// <inheritdoc />
         public override string ToString() => ParseDiagramAction.Diagram(this).ToString();

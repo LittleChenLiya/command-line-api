@@ -148,19 +148,23 @@ namespace System.CommandLine.Parsing
 
             configuration ??= new ParserConfiguration();
 
+            IReadOnlyList<string> resolvedArguments = arguments;
+
             arguments.Tokenize(
                 command,
                 configuration,
                 inferRootCommand: rawInput is not null,
                 out List<Token> tokens,
-                out List<string>? tokenizationErrors);
+                out List<string>? tokenizationErrors,
+                out resolvedArguments);
 
             var operation = new ParseOperation(
                 tokens,
                 command,
                 configuration,
                 tokenizationErrors,
-                rawInput);
+                rawInput,
+                resolvedArguments);
 
             return operation.Parse();
         }

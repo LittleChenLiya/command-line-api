@@ -19,17 +19,33 @@ namespace System.CommandLine.Parsing
             Type = type;
             Symbol = symbol;
             Position = ImplicitPosition;
+            SubstringStart = 0;
+            SubstringLength = Value.Length;
         }
        
-        internal Token(string? value, TokenType type, Symbol? symbol, int position)
+        internal Token(string? value, TokenType type, Symbol? symbol, int position, int substringStart = 0, int? substringLength = null)
         {
             Value = value ?? "";
             Type = type;
             Symbol = symbol;
             Position = position;
+            SubstringStart = substringStart;
+            SubstringLength = substringLength ?? Value.Length;
         }
 
         internal int Position { get; }
+
+        /// <summary>
+        /// The zero-based start position of <see cref="Value"/> within the original input argument from which the token was derived.
+        /// For tokens produced by short-option bundling or inline option values (e.g. <c>-xfoo</c> or <c>--opt:foo</c>), this points
+        /// at the part of the input argument represented by the token; otherwise it is 0.
+        /// </summary>
+        internal int SubstringStart { get; }
+
+        /// <summary>
+        /// The length of the part of the original input argument represented by the token.
+        /// </summary>
+        internal int SubstringLength { get; }
 
         /// <summary>
         /// The string value of the token.

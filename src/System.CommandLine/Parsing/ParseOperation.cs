@@ -21,17 +21,20 @@ namespace System.CommandLine.Parsing
         private CommandLineAction? _primaryAction;
         private List<CommandLineAction>? _preActions;
         private readonly Command _rootCommand;
+        private readonly IReadOnlyList<string> _arguments;
 
         public ParseOperation(
             List<Token> tokens,
             Command rootCommand,
             ParserConfiguration configuration,
             List<string>? tokenizeErrors,
-            string? rawInput)
+            string? rawInput,
+            IReadOnlyList<string> arguments)
         {
             _tokens = tokens;
             _configuration = configuration;
             _rootCommand = rootCommand;
+            _arguments = arguments;
             _rawInput = rawInput;
             _symbolResultTree = new(_rootCommand, tokenizeErrors);
             _innermostCommandResult = _rootCommandResult = new CommandResult(
@@ -70,6 +73,7 @@ namespace System.CommandLine.Parsing
                 _symbolResultTree.UnmatchedTokens,
                 _symbolResultTree.Errors,
                 _rawInput,
+                _arguments,
                 _primaryAction,
                 _preActions);
         }
@@ -241,6 +245,7 @@ namespace System.CommandLine.Parsing
             else
             {
                 optionResult = (OptionResult)symbolResult;
+                optionResult.AddIdentifierToken(CurrentToken);
             }
 
             optionResult.IdentifierTokenCount++;

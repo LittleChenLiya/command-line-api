@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.CommandLine.Binding;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace System.CommandLine.Parsing
@@ -11,6 +12,8 @@ namespace System.CommandLine.Parsing
     /// </summary>
     public sealed class OptionResult : SymbolResult
     {
+        private readonly List<Token> _identifierTokens = [];
+
         internal OptionResult(
             Option option,
             SymbolResultTree symbolResultTree,
@@ -20,6 +23,10 @@ namespace System.CommandLine.Parsing
         {
             Option = option ?? throw new ArgumentNullException(nameof(option));
             IdentifierToken = token;
+            if (token is not null)
+            {
+                _identifierTokens.Add(token);
+            }
         }
 
         /// <summary>
@@ -38,6 +45,13 @@ namespace System.CommandLine.Parsing
         /// </summary>
         /// <remarks>An identifier token is a token that matches either the option's name or one of its aliases.</remarks>
         public Token? IdentifierToken { get; }
+
+        /// <summary>
+        /// Gets all tokens that identified this option, one for each occurrence (including repeated options and bundled short options).
+        /// </summary>
+        internal IReadOnlyList<Token> IdentifierTokens => _identifierTokens;
+
+        internal void AddIdentifierToken(Token token) => _identifierTokens.Add(token);
 
         /// <summary>
         /// Gets the number of occurrences of an identifier token matching the option.

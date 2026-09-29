@@ -31,7 +31,8 @@ namespace System.CommandLine.Parsing
             ParserConfiguration configuration,
             bool inferRootCommand,
             out List<Token> tokens,
-            out List<string>? errors)
+            out List<string>? errors,
+            out IReadOnlyList<string> resolvedArguments)
         {
             const int FirstArgIsNotRootCommand = -1;
 
@@ -164,11 +165,11 @@ namespace System.CommandLine.Parsing
                          knownTokens.TryGetValue(first, out var subtoken) &&
                          subtoken.Type == TokenType.Option)
                 {
-                    tokenList.Add(Option(first, (Option)subtoken.Symbol!));
+                    tokenList.Add(Option(first, (Option)subtoken.Symbol!, substringLength: first.Length));
 
                     if (rest is not null)
                     {
-                        tokenList.Add(Argument(rest));
+                        tokenList.Add(Argument(rest, substringStart: first.Length + 1));
                     }
                 }
                 else if (!configuration.EnablePosixBundling ||
@@ -178,7 +179,7 @@ namespace System.CommandLine.Parsing
                     tokenList.Add(Argument(arg));
                 }
 
-                Token Argument(string value) => new(value, TokenType.Argument, default, i);
+                Token Argument(string value, int substringStart = 0) => new(value, TokenType.Argument, default, i, substringStart);
 
                 Token CommandArgument(string value, Command command) => new(value, TokenType.Argument, command, i);
 
@@ -186,7 +187,7 @@ namespace System.CommandLine.Parsing
 
                 Token Command(string value, Command cmd) => new(value, TokenType.Command, cmd, i);
 
-                Token Option(string value, Option option) => new(value, TokenType.Option, option, i);
+                Token Option(string value, Option option, int substringStart = 0, int? substringLength = null) => new(value, TokenType.Option, option, i, substringStart, substringLength);
 
                 Token DoubleDash() => new("--", TokenType.DoubleDash, default, i);
 
@@ -195,6 +196,7 @@ namespace System.CommandLine.Parsing
 
             tokens = tokenList;
             errors = errorList;
+            resolvedArguments = args.ToArray();
 
             bool CanBeUnbundled(string arg)
                 => arg.Length > 2
@@ -212,7 +214,8 @@ namespace System.CommandLine.Parsing
                 {
                     if (alias[i] == ':' || alias[i] == '=')
                     {
-                        tokenList.Add(new Token(alias.Slice(i + 1).ToString(), TokenType.Argument, default, argumentIndex));
+                        // The separator sits at index i in the bundle (alias excludes the leading '-'), so the value starts at i + 2 of the input argument.
+                        tokenList.Add(new Token(alias.Slice(i + 1).ToString(), TokenType.Argument, default, argumentIndex, i + 2));
                         return true;
                     }
 
@@ -222,14 +225,16 @@ namespace System.CommandLine.Parsing
                         if (tokensBefore != tokenList.Count && tokenList[tokenList.Count - 1].Type == TokenType.Option)
                         {
                             // Invalid_char_in_bundle_causes_rest_to_be_interpreted_as_value
-                            tokenList.Add(new Token(alias.Slice(i).ToString(), TokenType.Argument, default, argumentIndex));
+                            // The rest (including the unmatched character) starts at offset i within the bundle alias, i.e. i + 1 of the input argument.
+                            tokenList.Add(new Token(alias.Slice(i).ToString(), TokenType.Argument, default, argumentIndex, i + 1));
                             return true;
                         }
 
                         return false;
                     }
 
-                    tokenList.Add(new Token(found.Value, found.Type, found.Symbol, argumentIndex));
+                    // The bundle starts with the leading '-', which is part of each short option token (e.g. "-f" within "-fz").
+                    tokenList.Add(new Token($"-{alias[i]}", found.Type, found.Symbol, argumentIndex, i, 2));
                     if (i != alias.Length - 1 && ((Option)found.Symbol!).Greedy)
                     {
                         int index = i + 1;
@@ -237,7 +242,8 @@ namespace System.CommandLine.Parsing
                         {
                             index++; // Last_bundled_option_can_accept_argument_with_colon_separator
                         }
-                        tokenList.Add(new Token(alias.Slice(index).ToString(), TokenType.Argument, default, argumentIndex));
+                        // The value part begins at alias offset index; relative to the input argument (which has one extra leading '-') it starts at index + 1.
+                        tokenList.Add(new Token(alias.Slice(index).ToString(), TokenType.Argument, default, argumentIndex, index + 1));
                         return true;
                     }
                 }
