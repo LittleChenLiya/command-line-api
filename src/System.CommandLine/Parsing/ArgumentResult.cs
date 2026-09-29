@@ -54,6 +54,11 @@ namespace System.CommandLine.Parsing
             return _conversionResult = ValidateAndConvert(useValidators: true);
         }
 
+        // Gets the conversion result already produced while parsing, without triggering any
+        // conversion, validation, or default value factory invocation. Returns null if
+        // conversion has not taken place yet.
+        internal ArgumentConversionResult? CachedConversionResult => _conversionResult;
+
         /// <summary>
         /// Gets the parsed value or the default value for <see cref="Argument"/>.
         /// </summary>

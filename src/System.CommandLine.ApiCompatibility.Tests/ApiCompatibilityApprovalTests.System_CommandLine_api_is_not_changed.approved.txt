@@ -59,6 +59,12 @@
     public System.Void SetAction(System.Func<ParseResult,System.Threading.Tasks.Task> action)
     public System.Void SetAction(System.Func<ParseResult,System.Threading.Tasks.Task<System.Int32>> action)
     public System.Void SetAction(System.Func<ParseResult,System.Threading.CancellationToken,System.Threading.Tasks.Task<System.Int32>> action)
+  public class CommandExecutionDescription
+    public System.CommandLine.Parsing.TokenRange IdentifierTokenRange { get; }
+    public System.String Name { get; }
+    public System.Collections.Generic.IReadOnlyList<SymbolExecutionDescription> Symbols { get; }
+    public System.Collections.Generic.IReadOnlyList<System.String> UnmatchedTokens { get; }
+    public System.String ToString()
   public static class CompletionSourceExtensions
     public static System.Void Add(this System.Collections.Generic.List<System.Func<System.CommandLine.Completions.CompletionContext,System.Collections.Generic.IEnumerable<System.CommandLine.Completions.CompletionItem>>> completionSources, System.Func<System.CommandLine.Completions.CompletionContext,System.Collections.Generic.IEnumerable<System.String>> completionsDelegate)
     public static System.Void Add(this System.Collections.Generic.List<System.Func<System.CommandLine.Completions.CompletionContext,System.Collections.Generic.IEnumerable<System.CommandLine.Completions.CompletionItem>>> completionSources, System.String[] completions)
@@ -73,6 +79,15 @@
   public class EnvironmentVariablesDirective : Directive
     .ctor()
     public System.CommandLine.Invocation.CommandLineAction Action { get; set; }
+  public class ExecutionPlan
+    public System.Collections.Generic.IReadOnlyList<CommandExecutionDescription> Commands { get; }
+    public System.Collections.Generic.IReadOnlyList<System.CommandLine.Parsing.ParseError> Errors { get; }
+    public CommandExecutionDescription SelectedCommand { get; }
+    public System.Collections.Generic.IReadOnlyList<System.CommandLine.Parsing.Token> Tokens { get; }
+    public System.String ToString()
+  public enum ExecutionSymbolKind : System.Enum, System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable
+    Option=0
+    Argument=1
   public class InvocationConfiguration
     .ctor()
     public System.Boolean EnableDefaultExceptionHandler { get; set; }
@@ -107,6 +122,14 @@
     public static Option<System.IO.DirectoryInfo> AcceptExistingOnly(this Option<System.IO.DirectoryInfo> option)
     public static Option<System.IO.FileSystemInfo> AcceptExistingOnly(this Option<System.IO.FileSystemInfo> option)
     public static Option<T> AcceptExistingOnly<T>(this Option<T> option)
+  public class ParsedValue
+    public System.String ConversionError { get; }
+    public System.Object ConvertedValue { get; }
+    public System.Boolean IsSuccess { get; }
+    public ParseValueOrigin Origin { get; }
+    public System.String RawValue { get; }
+    public System.CommandLine.Parsing.TokenRange TokenRange { get; }
+    public System.String ToString()
   public class ParserConfiguration
     .ctor()
     public System.Boolean EnablePosixBundling { get; set; }
@@ -122,6 +145,7 @@
     public System.Collections.Generic.IReadOnlyList<System.String> UnmatchedTokens { get; }
     public System.CommandLine.Completions.CompletionContext GetCompletionContext()
     public System.Collections.Generic.IEnumerable<System.CommandLine.Completions.CompletionItem> GetCompletions(System.Nullable<System.Int32> position = null)
+    public ExecutionPlan GetExecutionPlan()
     public T GetRequiredValue<T>(Argument<T> argument)
     public T GetRequiredValue<T>(Option<T> option)
     public T GetRequiredValue<T>(System.String name)
@@ -137,6 +161,9 @@
     public System.Int32 Invoke(InvocationConfiguration configuration = null)
     public System.Threading.Tasks.Task<System.Int32> InvokeAsync(InvocationConfiguration configuration = null, System.Threading.CancellationToken cancellationToken = null)
     public System.String ToString()
+  public enum ParseValueOrigin : System.Enum, System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable
+    Explicit=0
+    Default=1
   public class RootCommand : Command, System.Collections.IEnumerable
     public static System.String ExecutableName { get; }
     public static System.String ExecutablePath { get; }
@@ -150,6 +177,12 @@
     public System.String Name { get; }
     public System.Collections.Generic.IEnumerable<Symbol> Parents { get; }
     public System.Collections.Generic.IEnumerable<System.CommandLine.Completions.CompletionItem> GetCompletions(System.CommandLine.Completions.CompletionContext context)
+    public System.String ToString()
+  public class SymbolExecutionDescription
+    public System.Collections.Generic.IReadOnlyList<System.CommandLine.Parsing.TokenRange> IdentifierTokenRanges { get; }
+    public ExecutionSymbolKind Kind { get; }
+    public System.String Name { get; }
+    public System.Collections.Generic.IReadOnlyList<ParsedValue> Values { get; }
     public System.String ToString()
   public class VersionOption : Option
     .ctor()
@@ -260,6 +293,16 @@ System.CommandLine.Parsing
     public System.String Value { get; }
     public System.Boolean Equals(System.Object obj)
     public System.Boolean Equals(Token other)
+    public System.Int32 GetHashCode()
+    public System.String ToString()
+  public struct TokenRange : System.ValueType, System.IEquatable<TokenRange>
+    public static System.Boolean op_Equality(TokenRange left, TokenRange right)
+    public static System.Boolean op_Inequality(TokenRange left, TokenRange right)
+    public System.Boolean HasValue { get; }
+    public System.Int32 Length { get; }
+    public System.Int32 Start { get; }
+    public System.Boolean Equals(TokenRange other)
+    public System.Boolean Equals(System.Object obj)
     public System.Int32 GetHashCode()
     public System.String ToString()
   public enum TokenType : System.Enum, System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable

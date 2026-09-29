@@ -35,6 +35,16 @@ namespace System.CommandLine.Binding
             }
         }
 
+        // Converts a single token using the argument's built-in string conversion, without
+        // running any custom parser, validator, or default value factory.
+        internal static ArgumentConversionResult ConvertToken(ArgumentResult argumentResult, Token token)
+        {
+            Type type = argumentResult.Argument.ValueType.GetElementTypeIfEnumerable()
+                       ?? argumentResult.Argument.ValueType;
+
+            return ConvertToken(argumentResult, type, token);
+        }
+
         private static ArgumentConversionResult ConvertToken(
             ArgumentResult argumentResult,
             Type type,

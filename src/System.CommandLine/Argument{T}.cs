@@ -101,6 +101,8 @@ namespace System.CommandLine
             return DefaultValueFactory.Invoke(argumentResult);
         }
 
+        internal override bool HasCustomParser => _customParser is not null;
+
         [UnconditionalSuppressMessage("ReflectionAnalysis", "IL3050", Justification = "https://github.com/dotnet/command-line-api/issues/1638")]
         [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2091", Justification = "https://github.com/dotnet/command-line-api/issues/1638")]
         internal static T? CreateDefaultValue()

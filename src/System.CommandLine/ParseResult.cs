@@ -22,6 +22,7 @@ namespace System.CommandLine
         private readonly CommandLineAction? _action;
         private readonly List<CommandLineAction>? _preActions;
         private InvocationConfiguration? _invocationConfiguration;
+        private ExecutionPlan? _executionPlan;
 
         internal ParseResult(
             ParserConfiguration configuration,
@@ -174,6 +175,21 @@ namespace System.CommandLine
 
         /// <inheritdoc />
         public override string ToString() => ParseDiagramAction.Diagram(this).ToString();
+
+        /// <summary>
+        /// Gets a read-only description of how this parse result is going to be executed.
+        /// </summary>
+        /// <remarks>
+        /// The description lists each selected command and, for the options and arguments that
+        /// will be supplied to it, the canonical symbol name, the parsed value (or the value
+        /// produced by its default value factory), and the range of input tokens it came from.
+        /// Building the description does not perform any additional conversion, validation, or
+        /// default value factory invocation, and it never calls <see cref="object.ToString"/>
+        /// on converted values, so it is safe to use for logging and confirmation user interfaces.
+        /// </remarks>
+        /// <returns>An <see cref="ExecutionPlan"/> describing the selected commands and values.</returns>
+        public ExecutionPlan GetExecutionPlan() =>
+            _executionPlan ??= ExecutionPlanBuilder.Build(this);
 
         /// <summary>
         /// Gets the result, if any, for the specified argument.

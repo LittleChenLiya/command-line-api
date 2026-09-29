@@ -40,6 +40,9 @@ namespace System.CommandLine.Binding
         internal static ArgumentConversionResult None(ArgumentResult argumentResult)
             => new(argumentResult, value: null, ArgumentConversionResultType.NoArgument);
 
+        internal static ArgumentConversionResult NotConverted(ArgumentResult argumentResult)
+            => new(argumentResult, value: null, ArgumentConversionResultType.Successful);
+
         private static string FormatErrorMessage(
             ArgumentResult argumentResult,
             Type expectedType,
