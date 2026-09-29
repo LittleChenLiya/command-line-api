@@ -7,6 +7,7 @@ namespace System.CommandLine;
 public class InvocationConfiguration
 {
     private TextWriter? _output, _error;
+    private int _maxAsyncValidatorConcurrency = Environment.ProcessorCount;
 
     /// <summary>
     /// Gets or sets a value that indicates whether a default exception handler catches any unhandled exceptions thrown during invocation.
@@ -23,6 +24,25 @@ public class InvocationConfiguration
     /// If this property is set to <see langword="null" />, the termination request isn't handled by System.CommandLine. In that case, the process is terminated immediately unless some other part of the program adds a handler.
     /// </remarks>
     public TimeSpan? ProcessTerminationTimeout { get; set; } = TimeSpan.FromSeconds(2);
+
+    /// <summary>
+    /// Gets or sets the maximum number of asynchronous validators (see <see cref="Command.AsyncValidators"/>)
+    /// that are allowed to run concurrently before the command's action is invoked.
+    /// </summary>
+    /// <value>The default is <see cref="Environment.ProcessorCount"/>. The value must be at least 1.</value>
+    public int MaxAsyncValidatorConcurrency
+    {
+        get => _maxAsyncValidatorConcurrency;
+        set
+        {
+            if (value < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), value, "The maximum async validator concurrency must be at least 1.");
+            }
+
+            _maxAsyncValidatorConcurrency = value;
+        }
+    }
 
     /// <summary>
     /// Gets or sets the standard output.

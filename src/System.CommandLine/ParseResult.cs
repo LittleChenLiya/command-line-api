@@ -22,6 +22,7 @@ namespace System.CommandLine
         private readonly CommandLineAction? _action;
         private readonly List<CommandLineAction>? _preActions;
         private InvocationConfiguration? _invocationConfiguration;
+        private IReadOnlyList<ParseError> _errors;
 
         internal ParseResult(
             ParserConfiguration configuration,
@@ -56,7 +57,7 @@ namespace System.CommandLine
 
             CommandLineText = commandLineText;
             _unmatchedTokens = unmatchedTokens is null ? Array.Empty<Token>() : unmatchedTokens;
-            Errors = errors is not null ? errors : Array.Empty<ParseError>();
+            _errors = errors is not null ? errors : Array.Empty<ParseError>();
         }
 
         internal static ParseResult Empty() => new RootCommand().Parse(Array.Empty<string>());
@@ -88,7 +89,17 @@ namespace System.CommandLine
         /// <summary>
         /// Gets the parse errors found while parsing command-line input.
         /// </summary>
-        public IReadOnlyList<ParseError> Errors { get; }
+        public IReadOnlyList<ParseError> Errors => _errors;
+
+        internal void AddError(ParseError error)
+        {
+            if (_errors is not List<ParseError> list)
+            {
+                _errors = list = new List<ParseError>(_errors);
+            }
+
+            list.Add(error);
+        }
 
         /// <summary>
         /// Gets the tokens identified while parsing command-line input.
@@ -299,6 +310,14 @@ namespace System.CommandLine
             if (configuration is not null)
             {
                 InvocationConfiguration = configuration;
+            }
+
+            if (AsyncValidationPipeline.CollectAsyncValidators(this) is not null)
+            {
+                throw new InvalidOperationException(
+                    "The command has asynchronous validators registered (Command.AsyncValidators), " +
+                    "which cannot be awaited by the synchronous Invoke method without blocking and risking a deadlock. " +
+                    "Use InvokeAsync instead.");
             }
 
             if (Action is AsynchronousCommandLineAction)

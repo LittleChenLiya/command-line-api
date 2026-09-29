@@ -29,6 +29,7 @@ namespace System.CommandLine
         private ChildSymbolList<Option>? _options;
         private ChildSymbolList<Command>? _subcommands;
         private List<Action<CommandResult>>? _validators;
+        private List<AsyncValidator>? _asyncValidators;
 
         /// <summary>
         /// Initializes a new instance of the Command class.
@@ -87,6 +88,20 @@ namespace System.CommandLine
         public List<Action<CommandResult>> Validators => _validators ??= new ();
 
         internal bool HasValidators => _validators is not null && _validators.Count > 0;
+
+        /// <summary>
+        /// Gets the asynchronous validators for the command. They run after parsing and synchronous
+        /// validation have completed without errors, and before the command's action is invoked.
+        /// Any diagnostic they produce prevents the action from running.
+        /// </summary>
+        /// <remarks>
+        /// Asynchronous validators are only executed by <see cref="ParseResult.InvokeAsync"/>.
+        /// The synchronous <see cref="ParseResult.Invoke"/> method does not block on them and throws
+        /// an <see cref="InvalidOperationException"/> instead.
+        /// </remarks>
+        public List<AsyncValidator> AsyncValidators => _asyncValidators ??= new ();
+
+        internal bool HasAsyncValidators => _asyncValidators is not null && _asyncValidators.Count > 0;
 
         /// <summary>
         /// Gets the unique set of strings that can be used on the command line to specify the command.

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.CommandLine.Parsing;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -39,6 +40,30 @@ namespace System.CommandLine.Invocation
                         if (result != 0)
                         {
                             preActionResult = result;
+                        }
+                    }
+                }
+
+                if (parseResult.Errors.Count == 0 && parseResult.Action is not null)
+                {
+                    var asyncValidators = AsyncValidationPipeline.CollectAsyncValidators(parseResult);
+
+                    if (asyncValidators is not null)
+                    {
+                        var diagnostics = await AsyncValidationPipeline.ValidateAsync(
+                            parseResult,
+                            asyncValidators,
+                            parseResult.InvocationConfiguration.MaxAsyncValidatorConcurrency,
+                            cts.Token);
+
+                        if (diagnostics is not null)
+                        {
+                            for (int i = 0; i < diagnostics.Count; i++)
+                            {
+                                parseResult.AddError(new ParseError(diagnostics[i].ToString()));
+                            }
+
+                            return new ParseErrorAction().Invoke(parseResult);
                         }
                     }
                 }

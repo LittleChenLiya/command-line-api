@@ -42,6 +42,7 @@
     public System.CommandLine.Invocation.CommandLineAction Action { get; set; }
     public System.Collections.Generic.ICollection<System.String> Aliases { get; }
     public System.Collections.Generic.IList<Argument> Arguments { get; }
+    public System.Collections.Generic.List<System.CommandLine.Invocation.AsyncValidator> AsyncValidators { get; }
     public System.Collections.Generic.IEnumerable<Symbol> Children { get; }
     public System.Collections.Generic.IList<Option> Options { get; }
     public System.Collections.Generic.IList<Command> Subcommands { get; }
@@ -77,6 +78,7 @@
     .ctor()
     public System.Boolean EnableDefaultExceptionHandler { get; set; }
     public System.IO.TextWriter Error { get; set; }
+    public System.Int32 MaxAsyncValidatorConcurrency { get; set; }
     public System.IO.TextWriter Output { get; set; }
     public System.Nullable<System.TimeSpan> ProcessTerminationTimeout { get; set; }
   public abstract class Option : Symbol
@@ -194,6 +196,10 @@ System.CommandLine.Help
 System.CommandLine.Invocation
   public abstract class AsynchronousCommandLineAction : CommandLineAction
     public System.Threading.Tasks.Task<System.Int32> InvokeAsync(System.CommandLine.ParseResult parseResult, System.Threading.CancellationToken cancellationToken = null)
+  public class AsyncValidator
+    .ctor(System.String name, System.Func<System.CommandLine.ParseResult,System.Threading.CancellationToken,System.Threading.Tasks.Task<ValidationDiagnostic>> validate)
+    public System.String Name { get; }
+    public System.Func<System.CommandLine.ParseResult,System.Threading.CancellationToken,System.Threading.Tasks.Task<ValidationDiagnostic>> Validate { get; }
   public abstract class CommandLineAction
     public System.Boolean ClearsParseErrors { get; }
     public System.Boolean Terminating { get; }
@@ -204,6 +210,11 @@ System.CommandLine.Invocation
     public System.Int32 Invoke(System.CommandLine.ParseResult parseResult)
   public abstract class SynchronousCommandLineAction : CommandLineAction
     public System.Int32 Invoke(System.CommandLine.ParseResult parseResult)
+  public class ValidationDiagnostic
+    .ctor(System.String message, System.String validatorName = null)
+    public System.String Message { get; }
+    public System.String ValidatorName { get; }
+    public System.String ToString()
 System.CommandLine.Parsing
   public class ArgumentResult : SymbolResult
     public System.CommandLine.Argument Argument { get; }
