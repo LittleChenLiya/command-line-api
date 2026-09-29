@@ -137,7 +137,7 @@ namespace System.CommandLine
 
             foreach (var completion in Argument.GetCompletions(context))
             {
-                if (completion.Label.ContainsCaseInsensitive(context.WordToComplete))
+                if (Matches(completion.Label, context))
                 {
                     (completions ??= new List<CompletionItem>()).Add(completion);
                 }
@@ -151,6 +151,10 @@ namespace System.CommandLine
             return completions
                    .OrderBy(item => item.SortText.IndexOfCaseInsensitive(context.WordToComplete))
                    .ThenBy(symbol => symbol.Label, StringComparer.OrdinalIgnoreCase);
+        bool Matches(string label, CompletionContext context) =>
+            context.PrefixMatch
+                ? label.StartsWith(context.WordToComplete, StringComparison.OrdinalIgnoreCase)
+                : label.ContainsCaseInsensitive(context.WordToComplete);
         }
 
         /// <summary>

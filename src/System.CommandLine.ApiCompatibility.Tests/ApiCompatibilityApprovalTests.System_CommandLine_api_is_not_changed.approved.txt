@@ -51,6 +51,7 @@
     public System.Void Add(Option option)
     public System.Void Add(Command command)
     public System.Collections.Generic.IEnumerable<System.CommandLine.Completions.CompletionItem> GetCompletions(System.CommandLine.Completions.CompletionContext context)
+    public System.CommandLine.Completions.EditorCompletionList GetEditorCompletions(System.String commandLine, System.Int32 cursorPosition, ParserConfiguration configuration = null)
     public ParseResult Parse(System.Collections.Generic.IReadOnlyList<System.String> args, ParserConfiguration configuration = null)
     public ParseResult Parse(System.String commandLine, ParserConfiguration configuration = null)
     public System.Void SetAction(System.Action<ParseResult> action)
@@ -173,6 +174,18 @@ System.CommandLine.Completions
     public System.Boolean Equals(System.Object obj)
     public System.Int32 GetHashCode()
     public System.String ToString()
+  public class CompletionReplacementRange
+    public System.Int32 End { get; }
+    public System.Int32 Start { get; }
+  public class EditorCompletionItem
+    public CompletionItem CompletionItem { get; }
+    public System.String DisplayText { get; }
+    public System.String InsertText { get; }
+    public CompletionReplacementRange ReplacementRange { get; }
+  public class EditorCompletionList
+    public System.String CommandLineText { get; }
+    public System.Int32 CursorPosition { get; }
+    public System.Collections.Generic.IReadOnlyList<EditorCompletionItem> Items { get; }
   public class SuggestDirective : System.CommandLine.Directive
     .ctor()
     public System.CommandLine.Invocation.CommandLineAction Action { get; set; }

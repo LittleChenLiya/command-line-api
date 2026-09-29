@@ -39,4 +39,21 @@ public class TextCompletionContext : CompletionContext
     /// <param name="position">The cursor position at which completions are calculated.</param>
     public TextCompletionContext AtCursorPosition(int position) =>
         new(ParseResult, CommandLineText, position);
+
+    internal static TextCompletionContext Create(
+        ParseResult parseResult,
+        string commandLineText,
+        int cursorPosition,
+        string wordToComplete) =>
+        new(parseResult, commandLineText, cursorPosition, wordToComplete);
+
+    private TextCompletionContext(
+        ParseResult parseResult,
+        string commandLineText,
+        int cursorPosition,
+        string wordToComplete) : base(parseResult, wordToComplete)
+    {
+        CommandLineText = commandLineText;
+        CursorPosition = cursorPosition;
+    }
 }

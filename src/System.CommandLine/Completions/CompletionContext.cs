@@ -41,6 +41,8 @@ namespace System.CommandLine.Completions
 
         internal bool IsEmpty => ReferenceEquals(this, _empty);
 
+        internal bool PrefixMatch { get; set; }
+
         /// <summary>
         /// Gets the text to be matched for completion, which can be used to filter a list of completions.
         /// </summary>
