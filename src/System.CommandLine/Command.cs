@@ -261,6 +261,19 @@ namespace System.CommandLine
         public ParseResult Parse(string commandLine, ParserConfiguration? configuration = null)
             => CommandLineParser.Parse(this, commandLine, configuration);
 
+        /// <summary>
+        /// Gets editor completions for the specified complete command line text and UTF-16 cursor position.
+        /// </summary>
+        /// <param name="commandLine">The complete command line text.</param>
+        /// <param name="cursorPosition">The cursor position, in UTF-16 code units.</param>
+        /// <param name="configuration">The configuration on which the parser's grammar and behaviors are based.</param>
+        /// <returns>Completion candidates and the text edits used to apply them.</returns>
+        public Completions.EditorCompletionList GetEditorCompletions(
+            string commandLine,
+            int cursorPosition,
+            ParserConfiguration? configuration = null)
+            => Completions.EditorCompletion.GetCompletions(this, commandLine, cursorPosition, configuration);
+
         /// <inheritdoc />
         public override IEnumerable<CompletionItem> GetCompletions(CompletionContext context)
         {
@@ -294,7 +307,7 @@ namespace System.CommandLine
                         var argument = arguments[i];
                         foreach (var completion in argument.GetCompletions(context))
                         {
-                            if (completion.Label.ContainsCaseInsensitive(textToMatch))
+                            if (Matches(completion.Label))
                             {
                                 completions.Add(completion);
                             }
@@ -338,7 +351,7 @@ namespace System.CommandLine
             {
                 if (!identifier.Hidden)
                 {
-                    if (identifier.Name.ContainsCaseInsensitive(textToMatch))
+                    if (Matches(identifier.Name))
                     {
                         completions.Add(new CompletionItem(identifier.Name, CompletionItem.KindKeyword, detail: identifier.Description));
                     }
@@ -347,7 +360,7 @@ namespace System.CommandLine
                     {
                         foreach (string alias in aliases)
                         {
-                            if (alias.ContainsCaseInsensitive(textToMatch))
+                            if (Matches(alias))
                             {
                                 completions.Add(new CompletionItem(alias, CompletionItem.KindKeyword, detail: identifier.Description));
                             }
@@ -355,6 +368,11 @@ namespace System.CommandLine
                     }
                 }
             }
+
+            bool Matches(string value) =>
+                context.PrefixMatch
+                    ? value.StartsWith(textToMatch, StringComparison.OrdinalIgnoreCase)
+                    : value.ContainsCaseInsensitive(textToMatch);
         }
 
         internal bool EqualsNameOrAlias(string name)

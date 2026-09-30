@@ -230,16 +230,7 @@ namespace System.CommandLine
         public IEnumerable<CompletionItem> GetCompletions(
             int? position = null)
         {
-            SymbolResult currentSymbolResult = SymbolToComplete(position);
-
-            Symbol currentSymbol = currentSymbolResult switch
-            {
-                ArgumentResult argumentResult => argumentResult.Argument,
-                OptionResult optionResult => optionResult.Option,
-                DirectiveResult directiveResult => directiveResult.Directive,
-                _ => ((CommandResult)currentSymbolResult).Command
-            };
-
+            var currentSymbolResult = SymbolToComplete(position);
             var context = GetCompletionContext();
 
             if (position is not null &&
@@ -247,6 +238,20 @@ namespace System.CommandLine
             {
                 context = tcc.AtCursorPosition(position.Value);
             }
+            return GetCompletions(currentSymbolResult, context);
+        }
+
+        internal IEnumerable<CompletionItem> GetCompletions(
+            SymbolResult currentSymbolResult,
+            CompletionContext context)
+        {
+            Symbol currentSymbol = currentSymbolResult switch
+            {
+                ArgumentResult argumentResult => argumentResult.Argument,
+                OptionResult optionResult => optionResult.Option,
+                DirectiveResult directiveResult => directiveResult.Directive,
+                _ => ((CommandResult)currentSymbolResult).Command
+            };
 
             var completions = currentSymbol.GetCompletions(context);
 
@@ -268,6 +273,8 @@ namespace System.CommandLine
                     .SelectMany(c => new[] { c.Name }.Concat(c.Aliases))
                     .ToArray();
         }
+
+        internal SymbolResult SymbolToCompleteForEditor() => SymbolToComplete(null);
 
         /// <summary>
         /// Invokes the appropriate command handler for a parsed command-line input.
