@@ -37,6 +37,11 @@
         <target state="translated">Le répertoire n'existe pas : '{0}'.</target>
         <note />
       </trans-unit>
+      <trans-unit id="EnvironmentVariableArgumentConversionCannotParse">
+        <source>Cannot parse value '{0}' of environment variable '{1}' for option '{2}' as expected type '{3}'.</source>
+        <target state="new">Cannot parse value '{0}' of environment variable '{1}' for option '{2}' as expected type '{3}'.</target>
+        <note />
+      </trans-unit>
       <trans-unit id="ErrorReadingResponseFile">
         <source>Error reading response file '{0}': {1}</source>
         <target state="translated">Erreur durant la lecture du fichier réponse '{0}' : {1}</target>
@@ -155,6 +160,16 @@
       <trans-unit id="ResponseFileNotFound">
         <source>Response file not found '{0}'.</source>
         <target state="translated">Fichier réponse introuvable '{0}'.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="SensitiveArgumentConversionCannotParseForOption">
+        <source>Cannot parse the value for option '{0}' as expected type '{1}'. The value is not shown because the option is sensitive.</source>
+        <target state="new">Cannot parse the value for option '{0}' as expected type '{1}'. The value is not shown because the option is sensitive.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="SensitiveEnvironmentVariableArgumentConversionCannotParse">
+        <source>Cannot parse the value of environment variable '{0}' for option '{1}' as expected type '{2}'. The value is not shown because the option is sensitive.</source>
+        <target state="new">Cannot parse the value of environment variable '{0}' for option '{1}' as expected type '{2}'. The value is not shown because the option is sensitive.</target>
         <note />
       </trans-unit>
       <trans-unit id="SuggestionsTokenNotMatched">

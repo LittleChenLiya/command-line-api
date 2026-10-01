@@ -11,6 +11,7 @@ namespace System.CommandLine.Parsing
         internal List<ParseError>? Errors;
         internal List<Token>? UnmatchedTokens;
         private Dictionary<string, SymbolNode>? _symbolsByName;
+        private Dictionary<string, string?>? _environmentVariableSnapshot;
 
         internal SymbolResultTree(
             Command? rootCommand = null, 
@@ -30,6 +31,25 @@ namespace System.CommandLine.Parsing
         }
 
         internal int ErrorCount => Errors?.Count ?? 0;
+
+        /// <summary>
+        /// Reads an environment variable, caching the result so that a single parse
+        /// operation observes a fixed snapshot of the environment. Each parse operation
+        /// creates a new <see cref="SymbolResultTree"/>, so consecutive parses observe
+        /// consecutive environment states.
+        /// </summary>
+        internal string? GetEnvironmentVariable(string name)
+        {
+            var snapshot = _environmentVariableSnapshot ??= new Dictionary<string, string?>(StringComparer.Ordinal);
+
+            if (!snapshot.TryGetValue(name, out string? value))
+            {
+                value = Environment.GetEnvironmentVariable(name);
+                snapshot.Add(name, value);
+            }
+
+            return value;
+        }
 
         internal ArgumentResult? GetResult(Argument argument)
             => TryGetValue(argument, out SymbolResult? result) ? (ArgumentResult)result : default;

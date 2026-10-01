@@ -236,6 +236,24 @@ namespace System.CommandLine
                 value, optionAlias, expectedType, Environment.NewLine + string.Join(Environment.NewLine, completions));
 
         /// <summary>
+        ///   Interpolates values into a localized string similar to Cannot parse value &apos;{0}&apos; of environment variable &apos;{1}&apos; for option &apos;{2}&apos; as expected type &apos;{3}&apos;..
+        /// </summary>
+        internal static string EnvironmentVariableArgumentConversionCannotParse(string value, string environmentVariable, string optionAlias, Type expectedType)
+            => GetResourceString(Properties.Resources.EnvironmentVariableArgumentConversionCannotParse, value, environmentVariable, optionAlias, expectedType);
+
+        /// <summary>
+        ///   Interpolates values into a localized string similar to Cannot parse the value for option &apos;{0}&apos; as expected type &apos;{1}&apos;. The value is not shown because the option is sensitive..
+        /// </summary>
+        internal static string SensitiveArgumentConversionCannotParseForOption(string optionAlias, Type expectedType)
+            => GetResourceString(Properties.Resources.SensitiveArgumentConversionCannotParseForOption, optionAlias, expectedType);
+
+        /// <summary>
+        ///   Interpolates values into a localized string similar to Cannot parse the value of environment variable &apos;{0}&apos; for option &apos;{1}&apos; as expected type &apos;{2}&apos;. The value is not shown because the option is sensitive..
+        /// </summary>
+        internal static string SensitiveEnvironmentVariableArgumentConversionCannotParse(string environmentVariable, string optionAlias, Type expectedType)
+            => GetResourceString(Properties.Resources.SensitiveEnvironmentVariableArgumentConversionCannotParse, environmentVariable, optionAlias, expectedType);
+
+        /// <summary>
         /// Interpolates values into a localized string.
         /// </summary>
         /// <param name="resourceString">The string template into which values will be interpolated.</param>

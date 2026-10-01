@@ -28,6 +28,13 @@ namespace System.CommandLine.Parsing
         /// </summary>
         public Argument Argument { get; }
 
+        /// <summary>
+        /// Gets the name of the environment variable that provided the tokens for this
+        /// argument, or <see langword="null"/> when they did not come from an environment
+        /// variable. Used to report the source of conversion errors.
+        /// </summary>
+        internal string? EnvironmentVariableName { get; set; }
+
         internal bool ArgumentLimitReached => Argument.Arity.MaximumNumberOfValues == (_tokens?.Count ?? 0);
 
         public bool Implicit { get; private set; }

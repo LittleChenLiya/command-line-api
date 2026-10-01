@@ -43,7 +43,7 @@ namespace System.CommandLine.Parsing
         internal override bool UseDefaultValueFor(ArgumentResult argumentResult)
             => argumentResult.Argument.HasDefaultValue && argumentResult.Tokens.Count == 0;
 
-        internal void Validate(bool isInnermostCommand)
+        internal void Validate(bool isInnermostCommand, bool allowEnvironmentVariableFallback = true)
         {
             if (isInnermostCommand)
             {
@@ -64,7 +64,7 @@ namespace System.CommandLine.Parsing
 
             if (Command.HasOptions)
             {
-                ValidateOptionsAndAddDefaultResults(isInnermostCommand);
+                ValidateOptionsAndAddDefaultResults(isInnermostCommand, allowEnvironmentVariableFallback);
             }
 
             if (Command.HasArguments)
@@ -73,7 +73,7 @@ namespace System.CommandLine.Parsing
             }
         }
 
-        private void ValidateOptionsAndAddDefaultResults(bool completeValidation)
+        private void ValidateOptionsAndAddDefaultResults(bool completeValidation, bool allowEnvironmentVariableFallback)
         {
             var options = Command.Options;
             for (var i = 0; i < options.Count; i++)
@@ -90,7 +90,14 @@ namespace System.CommandLine.Parsing
 
                 if (!SymbolResultTree.TryGetValue(option, out SymbolResult? symbolResult))
                 {
-                    if (option.Required || option.Argument.HasDefaultValue)
+                    if (allowEnvironmentVariableFallback &&
+                        (completeValidation || option.Recursive) &&
+                        TryApplyEnvironmentVariable(option, out optionResult, out argumentResult))
+                    {
+                        // The option value was provided by an environment variable.
+                        // Validation and conversion proceed below as for any other option.
+                    }
+                    else if (option.Required || option.Argument.HasDefaultValue)
                     {
                         optionResult = new(option, SymbolResultTree, null, this);
                         SymbolResultTree.Add(optionResult.Option, optionResult);
@@ -138,6 +145,46 @@ namespace System.CommandLine.Parsing
                 }
 
                 _ = argumentResult.GetArgumentConversionResult();
+            }
+
+            bool TryApplyEnvironmentVariable(
+                Option option,
+                out OptionResult optionResult,
+                out ArgumentResult argumentResult)
+            {
+                optionResult = null!;
+                argumentResult = null!;
+
+                if (option.EnvironmentVariableName is not { Length: > 0 } environmentVariableName)
+                {
+                    return false;
+                }
+
+                // A variable that is set to an empty string is an explicitly provided
+                // (empty) value; only a variable that is not set counts as not provided.
+                if (SymbolResultTree.GetEnvironmentVariable(environmentVariableName) is not { } environmentValue)
+                {
+                    return false;
+                }
+
+                optionResult = new OptionResult(option, SymbolResultTree, null, this)
+                {
+                    EnvironmentVariableName = environmentVariableName
+                };
+                SymbolResultTree.Add(option, optionResult);
+
+                argumentResult = new ArgumentResult(option.Argument, SymbolResultTree, optionResult)
+                {
+                    EnvironmentVariableName = environmentVariableName
+                };
+                SymbolResultTree.Add(option.Argument, argumentResult);
+
+                foreach (string value in option.GetEnvironmentVariableValues(environmentValue))
+                {
+                    argumentResult.AddToken(new Token(value, TokenType.Argument, option.Argument));
+                }
+
+                return true;
             }
         }
 

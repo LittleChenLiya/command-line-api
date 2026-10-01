@@ -81,7 +81,16 @@ namespace System.CommandLine.Parsing
                     if (argumentResult.Argument.Arity.MaximumNumberOfValues > 0)
                     {
                         ArgumentConversionResult conversionResult = argumentResult.GetArgumentConversionResult();
-                        switch (conversionResult.Result)
+
+                        if (argumentResult.Parent is OptionResult { Option.IsSensitive: true })
+                        {
+                            // Sensitive option values are never echoed in the diagram.
+                            if (conversionResult.Result != ArgumentConversionResultType.NoArgument)
+                            {
+                                builder.Append("<***>");
+                            }
+                        }
+                        else switch (conversionResult.Result)
                         {
                             case ArgumentConversionResultType.NoArgument:
                                 break;

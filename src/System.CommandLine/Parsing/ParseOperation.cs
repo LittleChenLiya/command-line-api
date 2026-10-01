@@ -403,14 +403,18 @@ namespace System.CommandLine.Parsing
 
         private void ValidateAndAddDefaultResults()
         {
+            // Terminating actions such as help, version, and completions must not
+            // trigger environment variable reads.
+            bool allowEnvironmentVariableFallback = _primaryAction is not { Terminating: true };
+
             // Only the innermost command goes through complete validation,
             // for other commands only a subset of options is checked.
-            _innermostCommandResult.Validate(isInnermostCommand: true);
+            _innermostCommandResult.Validate(isInnermostCommand: true, allowEnvironmentVariableFallback);
 
             CommandResult? currentResult = _innermostCommandResult.Parent as CommandResult;
             while (currentResult is not null)
             {
-                currentResult.Validate(isInnermostCommand: false);
+                currentResult.Validate(isInnermostCommand: false, allowEnvironmentVariableFallback);
 
                 currentResult = currentResult.Parent as CommandResult;
             }

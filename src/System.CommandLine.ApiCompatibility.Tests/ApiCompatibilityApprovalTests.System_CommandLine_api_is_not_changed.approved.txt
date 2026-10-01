@@ -70,6 +70,10 @@
     .ctor(System.String name)
     public System.CommandLine.Invocation.CommandLineAction Action { get; set; }
     public System.Collections.Generic.IEnumerable<System.CommandLine.Completions.CompletionItem> GetCompletions(System.CommandLine.Completions.CompletionContext context)
+  public enum EnvironmentVariableParsingStrategy : System.Enum, System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable
+    Auto=0
+    SingleValue=1
+    Delimited=2
   public class EnvironmentVariablesDirective : Directive
     .ctor()
     public System.CommandLine.Invocation.CommandLineAction Action { get; set; }
@@ -85,8 +89,13 @@
     public System.Boolean AllowMultipleArgumentsPerToken { get; set; }
     public ArgumentArity Arity { get; set; }
     public System.Collections.Generic.List<System.Func<System.CommandLine.Completions.CompletionContext,System.Collections.Generic.IEnumerable<System.CommandLine.Completions.CompletionItem>>> CompletionSources { get; }
+    public System.Char EnvironmentVariableEscapeCharacter { get; set; }
+    public System.String EnvironmentVariableName { get; set; }
+    public EnvironmentVariableParsingStrategy EnvironmentVariableParsingStrategy { get; set; }
+    public System.Char EnvironmentVariableValueDelimiter { get; set; }
     public System.Boolean HasDefaultValue { get; }
     public System.String HelpName { get; set; }
+    public System.Boolean IsSensitive { get; set; }
     public System.Boolean Recursive { get; set; }
     public System.Boolean Required { get; set; }
     public System.Collections.Generic.List<System.Action<System.CommandLine.Parsing.OptionResult>> Validators { get; }
@@ -230,8 +239,14 @@ System.CommandLine.Parsing
     public System.Int32 IdentifierTokenCount { get; }
     public System.Boolean Implicit { get; }
     public System.CommandLine.Option Option { get; }
+    public OptionValueSource ValueSource { get; }
     public T GetValueOrDefault<T>()
     public System.String ToString()
+  public enum OptionValueSource : System.Enum, System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable
+    NotProvided=0
+    CommandLine=1
+    EnvironmentVariable=2
+    DefaultValue=3
   public class ParseError
     public System.String Message { get; }
     public SymbolResult SymbolResult { get; }

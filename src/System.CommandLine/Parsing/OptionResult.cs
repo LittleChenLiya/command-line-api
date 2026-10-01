@@ -44,6 +44,36 @@ namespace System.CommandLine.Parsing
         /// </summary>
         public int IdentifierTokenCount { get; internal set; }
 
+        /// <summary>
+        /// Gets the name of the environment variable that provided the option's value,
+        /// or <see langword="null"/> when the value did not come from an environment variable.
+        /// </summary>
+        internal string? EnvironmentVariableName { get; set; }
+
+        /// <summary>
+        /// Gets a value that indicates where the option's value came from:
+        /// the command line, an environment variable, or the option's default value.
+        /// </summary>
+        public OptionValueSource ValueSource
+        {
+            get
+            {
+                if (!Implicit)
+                {
+                    return OptionValueSource.CommandLine;
+                }
+
+                if (EnvironmentVariableName is not null)
+                {
+                    return OptionValueSource.EnvironmentVariable;
+                }
+
+                return Option.HasDefaultValue
+                    ? OptionValueSource.DefaultValue
+                    : OptionValueSource.NotProvided;
+            }
+        }
+
         /// <inheritdoc/>
         public override string ToString() => $"{nameof(OptionResult)}: {IdentifierToken?.Value ?? Option.Name} {string.Join(" ", Tokens.Select(t => t.Value))}";
 
@@ -64,7 +94,9 @@ namespace System.CommandLine.Parsing
         {
             if (Implicit)
             {
-                return true;
+                // When the value was provided by an environment variable, the environment
+                // value takes precedence over the option's default value.
+                return EnvironmentVariableName is null;
             }
 
             return Tokens.Count is 0 &&

@@ -37,6 +37,11 @@
         <target state="translated">El directorio no existe: '{0}'.</target>
         <note></note>
       </trans-unit>
+      <trans-unit id="EnvironmentVariableArgumentConversionCannotParse">
+        <source>Cannot parse value '{0}' of environment variable '{1}' for option '{2}' as expected type '{3}'.</source>
+        <target state="new">Cannot parse value '{0}' of environment variable '{1}' for option '{2}' as expected type '{3}'.</target>
+        <note />
+      </trans-unit>
       <trans-unit id="ErrorReadingResponseFile">
         <source>Error reading response file '{0}': {1}</source>
         <target state="translated">Error al leer el archivo de respuesta '{0}': {1}</target>
@@ -156,6 +161,16 @@
         <source>Response file not found '{0}'.</source>
         <target state="translated">Archivo de respuesta '{0}' no encontrado.</target>
         <note></note>
+      </trans-unit>
+      <trans-unit id="SensitiveArgumentConversionCannotParseForOption">
+        <source>Cannot parse the value for option '{0}' as expected type '{1}'. The value is not shown because the option is sensitive.</source>
+        <target state="new">Cannot parse the value for option '{0}' as expected type '{1}'. The value is not shown because the option is sensitive.</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="SensitiveEnvironmentVariableArgumentConversionCannotParse">
+        <source>Cannot parse the value of environment variable '{0}' for option '{1}' as expected type '{2}'. The value is not shown because the option is sensitive.</source>
+        <target state="new">Cannot parse the value of environment variable '{0}' for option '{1}' as expected type '{2}'. The value is not shown because the option is sensitive.</target>
+        <note />
       </trans-unit>
       <trans-unit id="SuggestionsTokenNotMatched">
         <source>'{0}' was not matched. Did you mean one of the following?</source>

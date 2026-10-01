@@ -225,4 +225,13 @@
   <data name="ArgumentConversionCannotParseForOption_Completions" xml:space="preserve">
     <value>Cannot parse argument '{0}' for option '{1}' as expected type '{2}'. Did you mean one of the following?{3}</value>
   </data>
+  <data name="EnvironmentVariableArgumentConversionCannotParse" xml:space="preserve">
+    <value>Cannot parse value '{0}' of environment variable '{1}' for option '{2}' as expected type '{3}'.</value>
+  </data>
+  <data name="SensitiveArgumentConversionCannotParseForOption" xml:space="preserve">
+    <value>Cannot parse the value for option '{0}' as expected type '{1}'. The value is not shown because the option is sensitive.</value>
+  </data>
+  <data name="SensitiveEnvironmentVariableArgumentConversionCannotParse" xml:space="preserve">
+    <value>Cannot parse the value of environment variable '{0}' for option '{1}' as expected type '{2}'. The value is not shown because the option is sensitive.</value>
+  </data>
 </root>

@@ -6,6 +6,7 @@ using System.CommandLine.Completions;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
 using System.Linq;
+using System.Text;
 
 namespace System.CommandLine
 {
@@ -119,6 +120,60 @@ namespace System.CommandLine
         public bool Required { get; set; }
 
         /// <summary>
+        /// Gets or sets the name of an environment variable that provides a fallback value
+        /// for the option when the option is not specified on the command line.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// When set, the value is resolved with the following precedence: an explicit command
+        /// line value wins over the environment variable value, which in turn wins over the
+        /// option's default value. An environment variable that is set to an empty string is
+        /// treated as an explicitly provided (empty) value, not as a missing value.
+        /// </para>
+        /// <para>
+        /// The environment variable value is converted using the same argument converter as
+        /// command line values. Conversion failures are reported as parse errors that identify
+        /// the environment variable as the source.
+        /// </para>
+        /// <para>
+        /// The environment is read at most once per parse operation; help and completion
+        /// actions do not trigger a read. Options that do not set this property are unaffected.
+        /// </para>
+        /// </remarks>
+        public string? EnvironmentVariableName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the strategy used to turn the environment variable value into option
+        /// values when <see cref="EnvironmentVariableName"/> is set. The default is
+        /// <see cref="CommandLine.EnvironmentVariableParsingStrategy.Auto"/>.
+        /// </summary>
+        public EnvironmentVariableParsingStrategy EnvironmentVariableParsingStrategy { get; set; }
+
+        /// <summary>
+        /// Gets or sets the character used to separate multiple values in an environment
+        /// variable value when the effective parsing strategy is
+        /// <see cref="CommandLine.EnvironmentVariableParsingStrategy.Delimited"/>.
+        /// The default is <c>;</c>.
+        /// </summary>
+        public char EnvironmentVariableValueDelimiter { get; set; } = ';';
+
+        /// <summary>
+        /// Gets or sets the character that escapes the delimiter or itself in an environment
+        /// variable value when the effective parsing strategy is
+        /// <see cref="CommandLine.EnvironmentVariableParsingStrategy.Delimited"/>.
+        /// The escape character only has special meaning when immediately followed by the
+        /// delimiter or by another escape character; otherwise it is treated literally.
+        /// The default is <c>\</c>.
+        /// </summary>
+        public char EnvironmentVariableEscapeCharacter { get; set; } = '\\';
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the option's value is sensitive.
+        /// Sensitive values are never echoed in parse error messages or parse diagrams.
+        /// </summary>
+        public bool IsSensitive { get; set; }
+
+        /// <summary>
         /// Gets the unique set of strings that can be used on the command line to specify the Option.
         /// </summary>
         /// <remarks>The collection does not contain the <see cref="Symbol.Name"/> of the Option.</remarks>
@@ -158,5 +213,58 @@ namespace System.CommandLine
         /// </summary>
         /// <returns>Returns the default value for the option, if defined. Null otherwise.</returns>
         public object? GetDefaultValue() => Argument.GetDefaultValue();
+
+        /// <summary>
+        /// Splits an environment variable value into individual option values according to
+        /// <see cref="EnvironmentVariableParsingStrategy"/>,
+        /// <see cref="EnvironmentVariableValueDelimiter"/> and
+        /// <see cref="EnvironmentVariableEscapeCharacter"/>.
+        /// </summary>
+        internal IEnumerable<string> GetEnvironmentVariableValues(string value)
+        {
+            EnvironmentVariableParsingStrategy strategy = EnvironmentVariableParsingStrategy;
+
+            if (strategy == EnvironmentVariableParsingStrategy.Auto)
+            {
+                strategy = Arity.MaximumNumberOfValues > 1
+                    ? EnvironmentVariableParsingStrategy.Delimited
+                    : EnvironmentVariableParsingStrategy.SingleValue;
+            }
+
+            if (strategy == EnvironmentVariableParsingStrategy.SingleValue)
+            {
+                // An explicitly set (even empty) environment variable is a provided value.
+                yield return value;
+                yield break;
+            }
+
+            char delimiter = EnvironmentVariableValueDelimiter;
+            char escape = EnvironmentVariableEscapeCharacter;
+            StringBuilder current = new(value.Length);
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                char c = value[i];
+
+                if (c == escape &&
+                    i + 1 < value.Length &&
+                    (value[i + 1] == delimiter || value[i + 1] == escape))
+                {
+                    current.Append(value[i + 1]);
+                    i++;
+                }
+                else if (c == delimiter)
+                {
+                    yield return current.ToString();
+                    current.Clear();
+                }
+                else
+                {
+                    current.Append(c);
+                }
+            }
+
+            yield return current.ToString();
+        }
     }
 }

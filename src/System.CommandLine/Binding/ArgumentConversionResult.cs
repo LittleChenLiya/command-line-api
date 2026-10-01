@@ -63,6 +63,21 @@ namespace System.CommandLine.Binding
             else if (argumentResult.Parent is OptionResult optionResult)
             {
                 string alias = optionResult.Option.Name;
+
+                // Sensitive option values are never echoed in error messages.
+                if (optionResult.Option.IsSensitive)
+                {
+                    return argumentResult.EnvironmentVariableName is { } sensitiveEnvironmentVariable
+                        ? LocalizationResources.SensitiveEnvironmentVariableArgumentConversionCannotParse(sensitiveEnvironmentVariable, alias, expectedType)
+                        : LocalizationResources.SensitiveArgumentConversionCannotParseForOption(alias, expectedType);
+                }
+
+                // Environment variable fallback values report the variable as the source.
+                if (argumentResult.EnvironmentVariableName is { } environmentVariable)
+                {
+                    return LocalizationResources.EnvironmentVariableArgumentConversionCannotParse(value, environmentVariable, alias, expectedType);
+                }
+
                 CompletionItem[] completionItems = optionResult.Option.GetCompletions(CompletionContext.Empty).ToArray();
 
                 if (completionItems.Length > 0)
