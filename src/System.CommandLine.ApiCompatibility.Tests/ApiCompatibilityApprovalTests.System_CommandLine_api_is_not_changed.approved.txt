@@ -216,6 +216,11 @@ System.CommandLine.Parsing
     public static System.CommandLine.ParseResult Parse(System.CommandLine.Command command, System.Collections.Generic.IReadOnlyList<System.String> args, System.CommandLine.ParserConfiguration configuration = null)
     public static System.CommandLine.ParseResult Parse(System.CommandLine.Command command, System.String commandLine, System.CommandLine.ParserConfiguration configuration = null)
     public static System.Collections.Generic.IEnumerable<System.String> SplitCommandLine(System.String commandLine)
+  public static class CommandLineRepresentation
+    public static System.Collections.Generic.IReadOnlyList<RepresentedToken> Decode(System.String text)
+    public static System.String Encode(System.Collections.Generic.IReadOnlyList<System.String> tokens)
+    public static System.String Encode(System.String token)
+    public static System.Boolean TryDecode(System.String text, ref System.Collections.Generic.IReadOnlyList<RepresentedToken> tokens, ref RepresentationError& error)
   public class CommandResult : SymbolResult
     public System.Collections.Generic.IEnumerable<SymbolResult> Children { get; }
     public System.CommandLine.Command Command { get; }
@@ -235,6 +240,21 @@ System.CommandLine.Parsing
   public class ParseError
     public System.String Message { get; }
     public SymbolResult SymbolResult { get; }
+    public System.String ToString()
+  public class RepresentationError
+    public RepresentationErrorKind Kind { get; }
+    public System.String Message { get; }
+    public System.Int32 Position { get; }
+    public System.String ToString()
+  public enum RepresentationErrorKind : System.Enum, System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable
+    IllegalEscape=0
+    UnclosedQuote=1
+    InvalidUnicodeEscape=2
+  public class RepresentedToken
+    public System.Int32 End { get; }
+    public System.Int32 Length { get; }
+    public System.Int32 Start { get; }
+    public System.String Value { get; }
     public System.String ToString()
   public abstract class SymbolResult
     public System.Collections.Generic.IEnumerable<ParseError> Errors { get; }
