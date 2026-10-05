@@ -216,6 +216,30 @@ System.CommandLine.Parsing
     public static System.CommandLine.ParseResult Parse(System.CommandLine.Command command, System.Collections.Generic.IReadOnlyList<System.String> args, System.CommandLine.ParserConfiguration configuration = null)
     public static System.CommandLine.ParseResult Parse(System.CommandLine.Command command, System.String commandLine, System.CommandLine.ParserConfiguration configuration = null)
     public static System.Collections.Generic.IEnumerable<System.String> SplitCommandLine(System.String commandLine)
+  public static class CommandLineText
+    public static System.String Format(System.Collections.Generic.IReadOnlyList<System.String> tokens)
+    public static System.Boolean TryParse(System.String text, ref System.Collections.Generic.IReadOnlyList<CommandLineTextToken> tokens, ref CommandLineTextError& error)
+  public class CommandLineTextError
+    public CommandLineTextErrorKind Kind { get; }
+    public System.String Message { get; }
+    public System.Int32 Position { get; }
+    public System.String ToString()
+  public enum CommandLineTextErrorKind : System.Enum, System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable
+    UnterminatedQuote=0
+    InvalidEscape=1
+    UnexpectedCharacter=2
+  public struct CommandLineTextToken : System.ValueType, System.IEquatable<CommandLineTextToken>
+    public static System.Boolean op_Equality(CommandLineTextToken left, CommandLineTextToken right)
+    public static System.Boolean op_Inequality(CommandLineTextToken left, CommandLineTextToken right)
+    .ctor(System.String value, System.Int32 start, System.Int32 length)
+    public System.Int32 End { get; }
+    public System.Int32 Length { get; }
+    public System.Int32 Start { get; }
+    public System.String Value { get; }
+    public System.Boolean Equals(System.Object obj)
+    public System.Boolean Equals(CommandLineTextToken other)
+    public System.Int32 GetHashCode()
+    public System.String ToString()
   public class CommandResult : SymbolResult
     public System.Collections.Generic.IEnumerable<SymbolResult> Children { get; }
     public System.CommandLine.Command Command { get; }
