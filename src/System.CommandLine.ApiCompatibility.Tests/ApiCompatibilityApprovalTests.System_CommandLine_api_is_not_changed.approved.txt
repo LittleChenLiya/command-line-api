@@ -273,3 +273,47 @@ System.CommandLine.Parsing
     public System.IAsyncResult BeginInvoke(System.String tokenToReplace, ref System.Collections.Generic.IReadOnlyList<System.String> replacementTokens, ref System.String& errorMessage, System.AsyncCallback callback, System.Object object)
     public System.Boolean EndInvoke(ref System.Collections.Generic.IReadOnlyList<System.String> replacementTokens, ref System.String& errorMessage, System.IAsyncResult result)
     public System.Boolean Invoke(System.String tokenToReplace, ref System.Collections.Generic.IReadOnlyList<System.String> replacementTokens, ref System.String& errorMessage)
+System.CommandLine.StructuredBinding
+  public class StructuredBindingError
+    public StructuredBindingErrorKind Kind { get; }
+    public System.String Message { get; }
+    public System.String ToString()
+  public enum StructuredBindingErrorKind : System.Enum, System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable
+    UnknownCommand=0
+    UnknownOption=1
+    DuplicateOption=2
+    InvalidValueCount=3
+    ParseFailure=4
+  public class StructuredBindingResult
+    public System.Collections.Generic.IReadOnlyList<StructuredBindingError> Errors { get; }
+    public System.CommandLine.ParseResult ParseResult { get; }
+    public System.Boolean Success { get; }
+    public System.Collections.Generic.IReadOnlyList<System.String> Tokens { get; }
+    public System.Collections.Generic.IReadOnlyList<StructuredTokenSource> TokenSources { get; }
+  public class StructuredCommandLine
+    .ctor()
+    public System.Collections.Generic.IList<System.String> Arguments { get; }
+    public System.Collections.Generic.IList<System.String> CommandPath { get; }
+    public System.Collections.Generic.IList<StructuredOption> Options { get; }
+  public static class StructuredCommandLineBinder
+    public static StructuredBindingResult Bind(System.CommandLine.Command rootCommand, StructuredCommandLine input, System.CommandLine.ParserConfiguration configuration = null)
+  public class StructuredOption
+    .ctor(System.String key, System.String[] values)
+    .ctor(System.String key, System.Collections.Generic.IReadOnlyList<System.String> values)
+    public System.String Key { get; }
+    public System.Collections.Generic.IReadOnlyList<System.String> Values { get; }
+  public struct StructuredTokenSource : System.ValueType, System.IEquatable<StructuredTokenSource>
+    public static System.Boolean op_Equality(StructuredTokenSource left, StructuredTokenSource right)
+    public static System.Boolean op_Inequality(StructuredTokenSource left, StructuredTokenSource right)
+    public System.Int32 Index { get; }
+    public System.String Key { get; }
+    public StructuredTokenSourceKind Kind { get; }
+    public System.Boolean Equals(StructuredTokenSource other)
+    public System.Boolean Equals(System.Object obj)
+    public System.Int32 GetHashCode()
+  public enum StructuredTokenSourceKind : System.Enum, System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable
+    Command=0
+    OptionAlias=1
+    OptionValue=2
+    Argument=3
+    Separator=4
