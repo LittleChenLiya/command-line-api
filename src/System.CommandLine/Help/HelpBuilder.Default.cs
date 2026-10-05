@@ -123,15 +123,19 @@ internal partial class HelpBuilder
         /// Gets the usage label for the specified symbol (typically used as the first column text in help output).
         /// </summary>
         /// <param name="symbol">The symbol to get a help item for.</param>
+        /// <param name="visibility">
+        /// An optional predicate that determines whether a parameter of the symbol contributes to the usage label.
+        /// When <see langword="null"/>, parameters are included unless <see cref="Symbol.Hidden"/> is <see langword="true"/>.
+        /// </param>
         /// <returns>Text to display.</returns>
-        public static string GetCommandUsageLabel(Command symbol)
-            => GetIdentifierSymbolUsageLabel(symbol, symbol.Aliases);
+        public static string GetCommandUsageLabel(Command symbol, Func<Symbol, bool>? visibility = null)
+            => GetIdentifierSymbolUsageLabel(symbol, symbol.Aliases, visibility);
 
-        /// <inheritdoc cref="GetCommandUsageLabel(Command)"/>
-        public static string GetOptionUsageLabel(Option symbol)
-            => GetIdentifierSymbolUsageLabel(symbol, symbol.Aliases);
+        /// <inheritdoc cref="GetCommandUsageLabel(Command, Func{Symbol, bool})"/>
+        public static string GetOptionUsageLabel(Option symbol, Func<Symbol, bool>? visibility = null)
+            => GetIdentifierSymbolUsageLabel(symbol, symbol.Aliases, visibility);
 
-        private static string GetIdentifierSymbolUsageLabel(Symbol symbol, ICollection<string>? aliasSet)
+        private static string GetIdentifierSymbolUsageLabel(Symbol symbol, ICollection<string>? aliasSet, Func<Symbol, bool>? visibility)
         {
             var aliases = aliasSet is null
                 ? new[] { symbol.Name }
@@ -147,7 +151,7 @@ internal partial class HelpBuilder
 
             foreach (var argument in symbol.GetParameters())
             {
-                if (!argument.Hidden)
+                if (visibility?.Invoke(argument) ?? !argument.Hidden)
                 {
                     var argumentFirstColumnText = GetArgumentUsageLabel(argument);
 
@@ -195,7 +199,7 @@ internal partial class HelpBuilder
         public static Func<HelpContext, bool> CommandUsageSection() =>
             ctx =>
             {
-                ctx.HelpBuilder.WriteHeading(LocalizationResources.HelpUsageTitle(), ctx.HelpBuilder.GetUsage(ctx.Command), ctx.Output);
+                ctx.HelpBuilder.WriteHeading(LocalizationResources.HelpUsageTitle(), ctx.HelpBuilder.GetUsage(ctx.Command, ctx), ctx.Output);
                 return true;
             };
 
@@ -233,7 +237,7 @@ internal partial class HelpBuilder
                 bool addedHelpOption = false;
                 foreach (Option option in ctx.Command.Options.OrderBy(o => o is HelpOption or VersionOption))
                 {
-                    if (!option.Hidden)
+                    if (ctx.IsVisible(option))
                     {
                         if (option is HelpOption)
                         {
@@ -257,7 +261,7 @@ internal partial class HelpBuilder
                                 foreach (var option in parentCommand.Options)
                                 {
                                     // global help aliases may be duplicated, we just ignore them
-                                    if (option is { Recursive: true, Hidden: false })
+                                    if (option.Recursive && ctx.IsVisible(option))
                                     {
                                         if (option is not HelpOption || !addedHelpOption)
                                         {

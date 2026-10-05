@@ -185,12 +185,15 @@ System.CommandLine.Help
     .ctor()
     public System.Boolean ClearsParseErrors { get; }
     public System.Int32 MaxWidth { get; set; }
+    public System.Func<System.CommandLine.Symbol,System.Boolean> SymbolVisibility { get; set; }
     public System.Int32 Invoke(System.CommandLine.ParseResult parseResult)
   public class HelpOption : System.CommandLine.Option
     .ctor()
     .ctor(System.String name, System.String[] aliases)
     public System.CommandLine.Invocation.CommandLineAction Action { get; set; }
     public System.Type ValueType { get; }
+  public static class HelpProjection
+    public static System.Void Write(System.CommandLine.Command command, System.IO.TextWriter output, System.Func<System.CommandLine.Symbol,System.Boolean> isVisible, System.Int32 maxWidth = 2147483647)
 System.CommandLine.Invocation
   public abstract class AsynchronousCommandLineAction : CommandLineAction
     public System.Threading.Tasks.Task<System.Int32> InvokeAsync(System.CommandLine.ParseResult parseResult, System.Threading.CancellationToken cancellationToken = null)

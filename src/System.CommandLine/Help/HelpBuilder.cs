@@ -43,7 +43,7 @@ namespace System.CommandLine.Help
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (context.Command.Hidden)
+            if (!context.IsVisible(context.Command))
             {
                 return;
             }
@@ -115,7 +115,7 @@ namespace System.CommandLine.Help
             Write(new HelpContext(this, command, writer));
         }
 
-        private string GetUsage(Command command)
+        private string GetUsage(Command command, HelpContext context)
         {
             return string.Join(" ", GetUsageParts().Where(x => !string.IsNullOrWhiteSpace(x)));
 
@@ -132,25 +132,25 @@ namespace System.CommandLine.Help
                 {
                     if (!displayOptionTitle)
                     {
-                        displayOptionTitle = parentCommand.Options.Any(x => x.Recursive && !x.Hidden);
+                        displayOptionTitle = parentCommand.Options.Any(x => x.Recursive && context.IsVisible(x));
                     }
 
                     yield return (parentCommand is RootCommand root ? root.HelpName : null) ?? parentCommand.Name;
 
                     if (parentCommand.Arguments.Any())
                     {
-                        yield return FormatArgumentUsage(parentCommand.Arguments);
+                        yield return FormatArgumentUsage(parentCommand.Arguments, context);
                     }
                 }
 
-                var hasCommandWithHelp = command.Subcommands.Any(x => !x.Hidden);
+                var hasCommandWithHelp = command.Subcommands.Any(context.IsVisible);
 
                 if (hasCommandWithHelp)
                 {
                     yield return LocalizationResources.HelpUsageCommand();
                 }
 
-                displayOptionTitle = displayOptionTitle || (command.Options.Any(x => !x.Hidden));
+                displayOptionTitle = displayOptionTitle || command.Options.Any(context.IsVisible);
                 
                 if (displayOptionTitle)
                 {
@@ -168,13 +168,13 @@ namespace System.CommandLine.Help
             command
                 .RecurseWhileNotNull(c => c.Parents.OfType<Command>().FirstOrDefault())
                 .Reverse()
-                .SelectMany(cmd => cmd.Arguments.Where(a => !a.Hidden))
+                .SelectMany(cmd => cmd.Arguments.Where(context.IsVisible))
                 .Select(a => GetTwoColumnRow(a, context))
                 .Distinct();
 
         private bool WriteSubcommands(HelpContext context)
         {
-            var subcommands = context.Command.Subcommands.Where(x => !x.Hidden).Select(x => GetTwoColumnRow(x, context)).ToArray();
+            var subcommands = context.Command.Subcommands.Where(context.IsVisible).Select(x => GetTwoColumnRow(x, context)).ToArray();
             if (subcommands.Length > 0)
             {
                 WriteHeading(LocalizationResources.HelpCommandsTitle(), null, context.Output);
@@ -277,7 +277,7 @@ namespace System.CommandLine.Help
             }
         }
 
-        private string FormatArgumentUsage(IList<Argument> arguments)
+        private string FormatArgumentUsage(IList<Argument> arguments, HelpContext context)
         {
             var sb = new StringBuilder(arguments.Count * 100);
 
@@ -286,7 +286,7 @@ namespace System.CommandLine.Help
             for (var i = 0; i < arguments.Count; i++)
             {
                 var argument = arguments[i];
-                if (argument.Hidden)
+                if (!context.IsVisible(argument))
                 {
                     continue;
                 }
@@ -425,10 +425,10 @@ namespace System.CommandLine.Help
 
             TwoColumnHelpRow GetOptionOrCommandRow()
             {
-                var firstColumnText = customization?.GetFirstColumn?.Invoke(context) 
+                var firstColumnText = customization?.GetFirstColumn?.Invoke(context)
                     ?? (symbol is Option option
-                            ? Default.GetOptionUsageLabel(option)
-                            : Default.GetCommandUsageLabel((Command)symbol));
+                            ? Default.GetOptionUsageLabel(option, context.IsVisible)
+                            : Default.GetCommandUsageLabel((Command)symbol, context.IsVisible));
 
                 var customizedSymbolDescription = customization?.GetSecondColumn?.Invoke(context);
 
@@ -467,7 +467,7 @@ namespace System.CommandLine.Help
             string GetOptionOrCommandDefaultValue()
             {
                 var arguments = symbol.GetParameters();
-                var defaultArguments = arguments.Where(x => !x.Hidden && Default.ShouldShowDefaultValue(x)).ToArray();
+                var defaultArguments = arguments.Where(x => context.IsVisible(x) && Default.ShouldShowDefaultValue(x)).ToArray();
 
                 if (defaultArguments.Length == 0)
                 {
