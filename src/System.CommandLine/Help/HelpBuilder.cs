@@ -34,6 +34,13 @@ namespace System.CommandLine.Help
         public int MaxWidth { get; }
 
         /// <summary>
+        /// Determines whether the specified symbol is visible in help output, taking into
+        /// account both <see cref="Symbol.Hidden"/> and the per-generation visibility view.
+        /// </summary>
+        internal static bool IsVisible(Symbol symbol, HelpVisibility? visibility) =>
+            !symbol.Hidden && (visibility?.IsVisible(symbol) ?? true);
+
+        /// <summary>
         /// Writes help output for the specified command.
         /// </summary>
         public virtual void Write(HelpContext context)
@@ -43,7 +50,7 @@ namespace System.CommandLine.Help
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (context.Command.Hidden)
+            if (!IsVisible(context.Command, context.Visibility))
             {
                 return;
             }
@@ -115,8 +122,22 @@ namespace System.CommandLine.Help
             Write(new HelpContext(this, command, writer));
         }
 
-        private string GetUsage(Command command)
+        /// <summary>
+        /// Writes help output for the specified command using the specified visibility view.
+        /// </summary>
+        /// <param name="command">The command for which help is being formatted.</param>
+        /// <param name="writer">A text writer to write output to.</param>
+        /// <param name="visibility">A visibility view that filters which symbols are displayed without modifying the command tree.</param>
+        public void Write(Command command, TextWriter writer, HelpVisibility? visibility)
         {
+            Write(new HelpContext(this, command, writer, visibility));
+        }
+
+        private string GetUsage(HelpContext context)
+        {
+            var command = context.Command;
+            var visibility = context.Visibility;
+
             return string.Join(" ", GetUsageParts().Where(x => !string.IsNullOrWhiteSpace(x)));
 
             IEnumerable<string> GetUsageParts()
@@ -132,26 +153,26 @@ namespace System.CommandLine.Help
                 {
                     if (!displayOptionTitle)
                     {
-                        displayOptionTitle = parentCommand.Options.Any(x => x.Recursive && !x.Hidden);
+                        displayOptionTitle = parentCommand.Options.Any(x => x.Recursive && IsVisible(x, visibility));
                     }
 
                     yield return (parentCommand is RootCommand root ? root.HelpName : null) ?? parentCommand.Name;
 
                     if (parentCommand.Arguments.Any())
                     {
-                        yield return FormatArgumentUsage(parentCommand.Arguments);
+                        yield return FormatArgumentUsage(parentCommand.Arguments, visibility);
                     }
                 }
 
-                var hasCommandWithHelp = command.Subcommands.Any(x => !x.Hidden);
+                var hasCommandWithHelp = command.Subcommands.Any(x => IsVisible(x, visibility));
 
                 if (hasCommandWithHelp)
                 {
                     yield return LocalizationResources.HelpUsageCommand();
                 }
 
-                displayOptionTitle = displayOptionTitle || (command.Options.Any(x => !x.Hidden));
-                
+                displayOptionTitle = displayOptionTitle || (command.Options.Any(x => IsVisible(x, visibility)));
+
                 if (displayOptionTitle)
                 {
                     yield return LocalizationResources.HelpUsageOptions();
@@ -168,13 +189,13 @@ namespace System.CommandLine.Help
             command
                 .RecurseWhileNotNull(c => c.Parents.OfType<Command>().FirstOrDefault())
                 .Reverse()
-                .SelectMany(cmd => cmd.Arguments.Where(a => !a.Hidden))
+                .SelectMany(cmd => cmd.Arguments.Where(a => IsVisible(a, context.Visibility)))
                 .Select(a => GetTwoColumnRow(a, context))
                 .Distinct();
 
         private bool WriteSubcommands(HelpContext context)
         {
-            var subcommands = context.Command.Subcommands.Where(x => !x.Hidden).Select(x => GetTwoColumnRow(x, context)).ToArray();
+            var subcommands = context.Command.Subcommands.Where(x => IsVisible(x, context.Visibility)).Select(x => GetTwoColumnRow(x, context)).ToArray();
             if (subcommands.Length > 0)
             {
                 WriteHeading(LocalizationResources.HelpCommandsTitle(), null, context.Output);
@@ -277,7 +298,7 @@ namespace System.CommandLine.Help
             }
         }
 
-        private string FormatArgumentUsage(IList<Argument> arguments)
+        private string FormatArgumentUsage(IList<Argument> arguments, HelpVisibility? visibility)
         {
             var sb = new StringBuilder(arguments.Count * 100);
 
@@ -286,7 +307,7 @@ namespace System.CommandLine.Help
             for (var i = 0; i < arguments.Count; i++)
             {
                 var argument = arguments[i];
-                if (argument.Hidden)
+                if (!IsVisible(argument, visibility))
                 {
                     continue;
                 }
@@ -425,10 +446,10 @@ namespace System.CommandLine.Help
 
             TwoColumnHelpRow GetOptionOrCommandRow()
             {
-                var firstColumnText = customization?.GetFirstColumn?.Invoke(context) 
+                var firstColumnText = customization?.GetFirstColumn?.Invoke(context)
                     ?? (symbol is Option option
-                            ? Default.GetOptionUsageLabel(option)
-                            : Default.GetCommandUsageLabel((Command)symbol));
+                            ? Default.GetOptionUsageLabel(option, context.Visibility)
+                            : Default.GetCommandUsageLabel((Command)symbol, context.Visibility));
 
                 var customizedSymbolDescription = customization?.GetSecondColumn?.Invoke(context);
 
@@ -467,7 +488,7 @@ namespace System.CommandLine.Help
             string GetOptionOrCommandDefaultValue()
             {
                 var arguments = symbol.GetParameters();
-                var defaultArguments = arguments.Where(x => !x.Hidden && Default.ShouldShowDefaultValue(x)).ToArray();
+                var defaultArguments = arguments.Where(x => IsVisible(x, context.Visibility) && Default.ShouldShowDefaultValue(x)).ToArray();
 
                 if (defaultArguments.Length == 0)
                 {

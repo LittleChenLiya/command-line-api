@@ -125,13 +125,19 @@ internal partial class HelpBuilder
         /// <param name="symbol">The symbol to get a help item for.</param>
         /// <returns>Text to display.</returns>
         public static string GetCommandUsageLabel(Command symbol)
-            => GetIdentifierSymbolUsageLabel(symbol, symbol.Aliases);
+            => GetIdentifierSymbolUsageLabel(symbol, symbol.Aliases, visibility: null);
 
         /// <inheritdoc cref="GetCommandUsageLabel(Command)"/>
         public static string GetOptionUsageLabel(Option symbol)
-            => GetIdentifierSymbolUsageLabel(symbol, symbol.Aliases);
+            => GetIdentifierSymbolUsageLabel(symbol, symbol.Aliases, visibility: null);
 
-        private static string GetIdentifierSymbolUsageLabel(Symbol symbol, ICollection<string>? aliasSet)
+        internal static string GetCommandUsageLabel(Command symbol, HelpVisibility? visibility)
+            => GetIdentifierSymbolUsageLabel(symbol, symbol.Aliases, visibility);
+
+        internal static string GetOptionUsageLabel(Option symbol, HelpVisibility? visibility)
+            => GetIdentifierSymbolUsageLabel(symbol, symbol.Aliases, visibility);
+
+        private static string GetIdentifierSymbolUsageLabel(Symbol symbol, ICollection<string>? aliasSet, HelpVisibility? visibility)
         {
             var aliases = aliasSet is null
                 ? new[] { symbol.Name }
@@ -147,7 +153,7 @@ internal partial class HelpBuilder
 
             foreach (var argument in symbol.GetParameters())
             {
-                if (!argument.Hidden)
+                if (IsVisible(argument, visibility))
                 {
                     var argumentFirstColumnText = GetArgumentUsageLabel(argument);
 
@@ -195,7 +201,7 @@ internal partial class HelpBuilder
         public static Func<HelpContext, bool> CommandUsageSection() =>
             ctx =>
             {
-                ctx.HelpBuilder.WriteHeading(LocalizationResources.HelpUsageTitle(), ctx.HelpBuilder.GetUsage(ctx.Command), ctx.Output);
+                ctx.HelpBuilder.WriteHeading(LocalizationResources.HelpUsageTitle(), ctx.HelpBuilder.GetUsage(ctx), ctx.Output);
                 return true;
             };
 
@@ -233,7 +239,7 @@ internal partial class HelpBuilder
                 bool addedHelpOption = false;
                 foreach (Option option in ctx.Command.Options.OrderBy(o => o is HelpOption or VersionOption))
                 {
-                    if (!option.Hidden)
+                    if (IsVisible(option, ctx.Visibility))
                     {
                         if (option is HelpOption)
                         {
@@ -257,7 +263,7 @@ internal partial class HelpBuilder
                                 foreach (var option in parentCommand.Options)
                                 {
                                     // global help aliases may be duplicated, we just ignore them
-                                    if (option is { Recursive: true, Hidden: false })
+                                    if (option.Recursive && IsVisible(option, ctx.Visibility))
                                     {
                                         if (option is not HelpOption || !addedHelpOption)
                                         {
